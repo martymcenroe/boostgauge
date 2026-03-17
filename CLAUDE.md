@@ -28,6 +28,32 @@ Do NOT modify or remove these hooks.
 
 ---
 
+## What This Project Is
+
+BoostGauge is a lightweight, always-on-top system monitor styled like a racing tachometer. It tracks ConPTY allocations, memory usage, process counts, and handles — collapsing them into a single composite gauge with peak-hold (telltale) needles at 1m, 10m, 1h, and all-time windows.
+
+Built for developers running multiple concurrent AI coding sessions who need real-time visibility into invisible resource pressure.
+
+## Tech Stack
+
+- **Language:** Python 3.10+
+- **GUI:** tkinter + PIL/Pillow (render gauge face as image, overlay dynamic needles)
+- **System metrics:** psutil (cross-platform) + Win32 API (ConPTY-specific)
+- **Tray icon:** pystray
+- **Packaging:** PyPI (pip install boostgauge) + PyInstaller (standalone .exe/.app)
+- **License:** MIT
+
+## Key Files
+
+- `src/boostgauge/app.py` — main entry point
+- `src/boostgauge/gauge.py` — tachometer renderer
+- `src/boostgauge/telltale.py` — peak-hold needle logic
+- `src/boostgauge/collector.py` — abstract data collector + platform detection
+- `src/boostgauge/collectors/windows.py` — Windows-specific metrics
+- `src/boostgauge/config.py` — configuration management
+
+---
+
 ## Project Identifiers
 
 - **Repository:** `martymcenroe/boostgauge`
