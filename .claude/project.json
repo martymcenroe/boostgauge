@@ -1,0 +1,11 @@
+{
+  "variables": {
+    "PROJECT_ROOT": "/c/Users/mcwiz/Projects/boostgauge",
+    "PROJECT_ROOT_WINDOWS": "C:\\Users\\mcwiz\\Projects\\boostgauge",
+    "PROJECT_NAME": "boostgauge",
+    "GITHUB_REPO": "martymcenroe/boostgauge",
+    "TOOLS_DIR": "/c/Users/mcwiz/Projects/boostgauge/tools",
+    "WORKTREE_PATTERN": "boostgauge-{ID}"
+  },
+  "inherit_from": "C:\\Users\\mcwiz\\Projects\\AssemblyZero"
+}
