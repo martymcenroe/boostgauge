@@ -3,10 +3,9 @@
   "claude": {
     "effort": "max"
   },
-  "assemblyZero": false,
+  "assemblyZero": true,
   "onboard": {
     "auto": true,
-    "pickupThresholdMinutes": 10,
     "guide": null,
     "plan": null
   }

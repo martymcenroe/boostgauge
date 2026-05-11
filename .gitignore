@@ -112,3 +112,6 @@ dmypy.json
 
 # Unleashed session transcripts (auto-generated, untracked)
 data/unleashed/
+
+# Issue planning artifacts (local-only blueprint dumps)
+blueprint/
