@@ -1,0 +1,33 @@
+[project]
+name = "boostgauge"
+version = "0.1.0"
+description = "Real-time system monitor styled like a racing tachometer"
+authors = [
+    {name = "Marty McEnroe",email = "cto@thrivetech.ai"}
+]
+license = {text = "PolyForm-Noncommercial-1.0.0"}
+readme = "README.md"
+requires-python = "^3.10"
+dependencies = [
+    "psutil (>=7.2.2,<8.0.0)",
+    "pillow (>=12.2.0,<13.0.0)",
+    "pystray (>=0.19.5,<0.20.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.3,<10.0.0)",
+    "pytest-cov (>=7.1.0,<8.0.0)"
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-ra --strict-markers"
