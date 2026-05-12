@@ -115,3 +115,6 @@ data/unleashed/
 
 # Issue planning artifacts (local-only blueprint dumps)
 blueprint/
+
+# Handoff log (per-session context transfers, local-only)
+data/handoff-log.md
