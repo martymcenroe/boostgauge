@@ -1,6 +1,12 @@
 # Speed-Run Route v2 — boostgauge zero-to-PyPI
 
-**Status:** Operational draft (features locked; landing page + wiki content still open per §12.2 / §12.4)
+> **⚠️ SUPERSEDED 2026-05-22 by `0004-route-v3.md`.**
+> v2 remains in the repo as historical reference — its feature arc (§5),
+> lap splits (§6), and known-halts recovery table (§7) are still
+> load-bearing references in v3. The reset procedure (§8) and the
+> dry-runs section (§4.3) are obsolete; see v3 §8 and `feedback-speedrun-no-dry-runs`.
+
+**Status:** SUPERSEDED — Operational draft (features locked; landing page + wiki content still open per §12.2 / §12.4)
 **Last updated:** 2026-05-09
 **Win condition:** YouTube video → X post → stars on AssemblyZero GitHub
 **Run budget:** ≤42 attempts (per user, 2026-05-09)
