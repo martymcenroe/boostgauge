@@ -1,0 +1,30 @@
+name: Deploy landing page to Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "docs/landing/**"
+      - ".github/workflows/deploy-landing.yml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  deployments: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: cloudflare-pages
+      url: https://boostgauge.martymcenroe.ai
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to Cloudflare Pages
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: 4fe1c5e241425c85d0f2c35c69fb45b8
+          command: pages deploy docs/landing --project-name=boostgauge --branch=main --commit-hash=${{ github.sha }} --commit-message="${{ github.event.head_commit.message }}"
