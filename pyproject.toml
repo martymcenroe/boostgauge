@@ -5,7 +5,7 @@ description = "Real-time system monitor styled like a racing tachometer"
 authors = [
     {name = "Marty McEnroe",email = "cto@thrivetech.ai"}
 ]
-license = {text = "PolyForm-Noncommercial-1.0.0"}
+license = {text = "MIT"}
 readme = "README.md"
 requires-python = "^3.10"
 dependencies = [
