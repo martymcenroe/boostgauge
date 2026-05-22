@@ -16,13 +16,13 @@ That file contains core rules that apply to ALL projects:
 
 ## Security Hooks (Enforced Automatically)
 
-This repo has three PreToolUse hooks deployed in `.claude/hooks/`:
-- **secret-guard.sh** — Blocks Bash commands that would leak secrets to stdout
-- **bash-gate.sh** — Blocks destructive git commands and chain operators
-- **secret-file-guard.sh** — Blocks Read/Write/Edit/Grep/NotebookEdit on secret files
+This repo has a PreToolUse hook deployed in `.claude/hooks/`:
+- **secret-file-guard.sh** — Blocks Read/Write/Edit/Grep/NotebookEdit on secret files (`.env`, `.dev.vars`, AWS credentials, etc.)
 
-These are wired in `.claude/settings.json` and enforced automatically.
-Do NOT modify or remove these hooks.
+It is wired in `.claude/settings.json` and enforced automatically.
+Do NOT modify or remove this hook.
+
+(Two additional hooks — `secret-guard.sh` for Bash-command output guarding and `bash-gate.sh` for destructive-command gating — are planned but not yet implemented. Track via fleet tooling in `martymcenroe/AssemblyZero`.)
 
 **This file adds boostgauge-specific rules ON TOP of those core rules.**
 
