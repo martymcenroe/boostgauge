@@ -131,3 +131,7 @@ data/session-index.jsonl
 
 # Lessons-learned aggregation (local-only)
 docs/lessons-learned.md
+
+# Session logs — internal-only; never publish (added 2026-05-23 after exposure discovery, see #72)
+docs/session-logs/
+docs/dom-dumps/
