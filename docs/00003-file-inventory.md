@@ -1,4 +1,4 @@
-# 0003 - boostgauge File Inventory
+# 00003 - boostgauge File Inventory
 
 **Status:** Active
 **Created:** 2026-03-17
