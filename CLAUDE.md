@@ -71,6 +71,22 @@ Built for developers running multiple concurrent AI coding sessions who need rea
 - **Worktree before code:** `git worktree add ../boostgauge-{ID} -b {ID}-short-desc`
 - **Push immediately:** `git push -u origin HEAD`
 
+### Test Strategy (Canonical)
+
+Every LLD's "Test Plan" section MUST reference `docs/design/0001-test-strategy.md`. That doc locks in:
+
+- **Option C** as the GUI testing approach: the renderer produces a `PIL.Image`; `tkinter.Tk()` is never instantiated in tests.
+- **Visual regression baselines** under `tests/visual/baselines/` with an explicit `--generate-baselines` flag — no implicit auto-accept.
+- The test pyramid + CI integration schedule.
+
+Per strategy doc §8, an LLD whose Test Plan does any of:
+
+1. skips mentioning `docs/design/0001-test-strategy.md`,
+2. proposes `tkinter.Tk()` in tests, or
+3. proposes baseline auto-acceptance
+
+is rejected at review without further analysis. Keep this rule and §8 of the strategy doc in sync — if one changes, change the other.
+
 ### Reports Before Merge (PRE-MERGE GATE)
 
 **Before ANY PR merge, you MUST:**
