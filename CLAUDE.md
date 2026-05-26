@@ -2,48 +2,36 @@
 
 You are a team member on the boostgauge project, not a tool.
 
-## FIRST: Read AssemblyZero Core Rules
+## Project Identifiers
 
-**Before doing any work, read the AssemblyZero core rules:**
-`C:\Users\mcwiz\Projects\AssemblyZero\CLAUDE.md`
+- **Repository:** `martymcenroe/boostgauge`
+- **Project Root (Windows):** `C:\Users\mcwiz\Projects\boostgauge`
+- **Project Root (Unix):** `/c/Users/mcwiz/Projects/boostgauge`
+- **Worktree Pattern:** `boostgauge-{IssueID}` (e.g., `boostgauge-45`)
 
-That file contains core rules that apply to ALL projects:
-- Safety rules (destructive commands, secret handling, path restrictions)
-- Worktree isolation rules
-- Path format rules (Windows vs Unix)
-- Two-Strike Rule (loop detection)
-- When Blocked or Uncertain protocol
+## Project-Specific Context
 
-## Security Hooks (Enforced Automatically)
+**Stack:** Python (Poetry), published to PyPI. Source under `src/boostgauge/`,
+entry points in `[tool.poetry.scripts]`, release via
+`.github/workflows/release.yml` on tag push. Pending-publisher registration
+on PyPI documented in runbook 0934.
 
-This repo has a PreToolUse hook deployed in `.claude/hooks/`:
-- **secret-file-guard.sh** — Blocks Read/Write/Edit/Grep/NotebookEdit on secret files (`.env`, `.dev.vars`, AWS credentials, etc.)
+**What this is:** lightweight, always-on-top system monitor styled like a
+racing tachometer. Tracks ConPTY allocations, memory, process counts, and
+handles — composite gauge with peak-hold (telltale) needles at 1m, 10m, 1h,
+and all-time windows. Built for developers running multiple concurrent AI
+coding sessions who need real-time visibility into invisible resource
+pressure.
 
-It is wired in `.claude/settings.json` and enforced automatically.
-Do NOT modify or remove this hook.
+**GUI / packaging stack:**
 
-(Two additional hooks — `secret-guard.sh` for Bash-command output guarding and `bash-gate.sh` for destructive-command gating — are planned but not yet implemented. Track via fleet tooling in `martymcenroe/AssemblyZero`.)
+- GUI: `tkinter` + `PIL`/`Pillow` — render gauge face as image, overlay
+  dynamic needles
+- System metrics: `psutil` (cross-platform) + Win32 API (ConPTY-specific)
+- Tray icon: `pystray`
+- Standalone packaging: `PyInstaller` (`.exe` / `.app`)
 
-**This file adds boostgauge-specific rules ON TOP of those core rules.**
-
----
-
-## What This Project Is
-
-BoostGauge is a lightweight, always-on-top system monitor styled like a racing tachometer. It tracks ConPTY allocations, memory usage, process counts, and handles — collapsing them into a single composite gauge with peak-hold (telltale) needles at 1m, 10m, 1h, and all-time windows.
-
-Built for developers running multiple concurrent AI coding sessions who need real-time visibility into invisible resource pressure.
-
-## Tech Stack
-
-- **Language:** Python 3.10+
-- **GUI:** tkinter + PIL/Pillow (render gauge face as image, overlay dynamic needles)
-- **System metrics:** psutil (cross-platform) + Win32 API (ConPTY-specific)
-- **Tray icon:** pystray
-- **Packaging:** PyPI (pip install boostgauge) + PyInstaller (standalone .exe/.app)
-- **License:** MIT
-
-## Key Files
+**Key modules:**
 
 - `src/boostgauge/app.py` — main entry point
 - `src/boostgauge/gauge.py` — tachometer renderer
@@ -52,32 +40,16 @@ Built for developers running multiple concurrent AI coding sessions who need rea
 - `src/boostgauge/collectors/windows.py` — Windows-specific metrics
 - `src/boostgauge/config.py` — configuration management
 
----
+## Workflow Override — GUI Testing Strategy
 
-## Project Identifiers
+The universal CLAUDE.md covers fleet-wide test rules. boostgauge **overrides**
+those with a stricter GUI-testing contract documented at
+`docs/design/0001-test-strategy.md`:
 
-- **Repository:** `martymcenroe/boostgauge`
-- **Project Root (Windows):** `C:\Users\mcwiz\Projects\boostgauge`
-- **Project Root (Unix):** `/c/Users/mcwiz/Projects/boostgauge`
-- **Worktree Pattern:** `boostgauge-{IssueID}` (e.g., `boostgauge-45`)
-
----
-
-## Project-Specific Workflow Rules
-
-### Required Workflow
-
-- **Docs before Code:** Write the LLD (`docs/lld/active/`) before writing code
-- **Worktree before code:** `git worktree add ../boostgauge-{ID} -b {ID}-short-desc`
-- **Push immediately:** `git push -u origin HEAD`
-
-### Test Strategy (Canonical)
-
-Every LLD's "Test Plan" section MUST reference `docs/design/0001-test-strategy.md`. That doc locks in:
-
-- **Option C** as the GUI testing approach: the renderer produces a `PIL.Image`; `tkinter.Tk()` is never instantiated in tests.
-- **Visual regression baselines** under `tests/visual/baselines/` with an explicit `--generate-baselines` flag — no implicit auto-accept.
-- The test pyramid + CI integration schedule.
+- **Option C** is the canonical GUI testing approach: the renderer produces
+  a `PIL.Image`; `tkinter.Tk()` is never instantiated in tests.
+- **Visual regression baselines** under `tests/visual/baselines/` require an
+  explicit `--generate-baselines` flag — no implicit auto-accept.
 
 Per strategy doc §8, an LLD whose Test Plan does any of:
 
@@ -85,44 +57,5 @@ Per strategy doc §8, an LLD whose Test Plan does any of:
 2. proposes `tkinter.Tk()` in tests, or
 3. proposes baseline auto-acceptance
 
-is rejected at review without further analysis. Keep this rule and §8 of the strategy doc in sync — if one changes, change the other.
-
-### Reports Before Merge (PRE-MERGE GATE)
-
-**Before ANY PR merge, you MUST:**
-
-1. Create `docs/reports/active/1{IssueID}-implementation-report.md`
-2. Create `docs/reports/active/1{IssueID}-test-report.md`
-3. Wait for orchestrator review
-
----
-
-## Documentation Structure
-
-This project uses the **1xxxx numbering scheme** (project-specific implementations):
-
-| Directory | Range | Contents |
-|-----------|-------|----------|
-| `docs/lld/` | 1xxxx | Low-level designs |
-| `docs/reports/` | 1xxxx | Implementation & test reports |
-| `docs/standards/` | 00xxx | Project-specific standards |
-| `docs/adrs/` | 00xxx | Architecture Decision Records |
-
----
-
-## Session Logging
-
-At end of session, append a summary to `docs/session-logs/YYYY-MM-DD.md`.
-
----
-
-## GitHub CLI Safety
-
-- ALWAYS use `--repo martymcenroe/boostgauge` explicitly
-- NEVER rely on default repo inference
-
----
-
-## You Are Not Alone
-
-Other agents may work on this project. Check `docs/session-logs/` for recent context.
+is **rejected at review without further analysis**. Keep this rule and §8 of
+the strategy doc in sync — if one changes, change the other.
