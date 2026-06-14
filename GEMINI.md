@@ -13,8 +13,6 @@ That file contains core rules that apply to ALL projects and ALL agents:
 
 ---
 
-## 1. Session Initialization (The Handshake)
-
 ## 2. Execution Rules
 
 - **Authority:** `AssemblyZero:standards/0002-coding-standards` is the law for Git workflows.
