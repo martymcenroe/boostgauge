@@ -135,3 +135,46 @@ docs/lessons-learned.md
 # Session logs — internal-only; never publish (added 2026-05-23 after exposure discovery, see #72)
 docs/session-logs/
 docs/dom-dumps/
+
+# --- AssemblyZero workflow debris shield (added 2026-07-14, see #83) ---
+# Publication-safety stance: err on the side of ignoring. Content can be
+# published later by choice; it cannot be unpublished.
+
+# Per-run workflow audit trails (drafts, verdicts, lessons, token budgets).
+# AssemblyZero#1458 contract: target repos must gitignore this.
+docs/lineage/
+
+# Workflow-generated implementation/test reports. New files stay local-only;
+# the report files already tracked before this rule remain tracked.
+docs/reports/
+
+# AZ-internal 907c/908p CLI+prompt stage docs (AssemblyZero#1627)
+docs/skills/
+
+# AZ-generated 4-digit runbooks; boostgauge's own runbooks use 5-digit numbering
+docs/runbooks/[0-9][0-9][0-9][0-9]-*.md
+
+# Workflow-generated wiki pages — publishing to the GitHub wiki is a
+# deliberate manual step, not a checkpoint sweep
+wiki/
+
+# Speedrun attempt snapshots + run log — publish by choice
+data/speedrun/
+
+# AZ data side-channels
+data/hourglass/
+data/daily-reports/
+
+# Implementation-workflow status file (also blocks plain `git worktree remove`)
+.implement-status-*.json
+
+# In-repo checkpoint/state directory (defensive)
+.assemblyzero/
+
+# Agent recovery / parked files
+*.bak
+*.parked-*
+
+# Scratch residue
+.tmp/
+scratch/
