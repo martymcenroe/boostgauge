@@ -579,5 +579,5 @@ files = [
 
 [metadata]
 lock-version = "2.1"
-python-versions = "^3.10"
-content-hash = "8fb8980c0a25d365d9993409ce7297cf0514fc1601d16a30d059e2c6517102be"
+python-versions = ">=3.10,<4"
+content-hash = "54adb6b2861f6955b086a1d7dc8e51fd25c674032ee753d7b68c1b1a57b25198"
