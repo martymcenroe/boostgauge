@@ -10,7 +10,7 @@ name: Auto Review
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, 'speedrun-attempt-*', 'hardening-run-*']
     types: [opened, synchronize, reopened]
 
 permissions:
