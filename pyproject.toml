@@ -21,6 +21,8 @@ Documentation = "https://github.com/martymcenroe/boostgauge/wiki"
 Issues = "https://github.com/martymcenroe/boostgauge/issues"
 "Built with AssemblyZero" = "https://github.com/martymcenroe/AssemblyZero"
 
+[project.scripts]
+boostgauge = "boostgauge.app:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
