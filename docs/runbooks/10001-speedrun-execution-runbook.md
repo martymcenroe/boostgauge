@@ -34,7 +34,7 @@ Settings that matter:
 
 ### 2.1 Machine hygiene — nothing may pop onto the screen
 - Focus Assist ON. Slack/Discord/mail fully quit. Windows Update paused.
-- **Verify the two Codex scheduled tasks are fixed or disabled** (AssemblyZero #1109/#1110 — they pop console windows and WILL steal focus mid-take).
+- Scheduled-task flash risk is resolved fleet-wide (comp-environ ADR-0006, 2026-07-27): the flash class — InteractiveToken tasks with console actions — was converted to silent wscript launchers, and the Codex-* tasks are S4U, which cannot draw on the interactive desktop at all. Paranoia check: `tools/verify_converted_tasks.py` in comp-environ.
 - Close other Claude/agent sessions — a solo machine keeps the take stable.
 - **Use a dedicated clean browser profile for scene S3** — no bookmarks, logged-in notification bell off. A GitHub notification can flash a private repo's name onto footage you can never unpublish.
 - 15+ GB free disk for the recording.
@@ -64,8 +64,10 @@ N=1                                  # attempt number
 cd /c/Users/mcwiz/Projects/boostgauge
 git checkout -b speedrun-attempt-${N} speedrun-spawn-v1
 sed -i "s/^version = \".*\"/version = \"0.1.$((N-1))\"/" pyproject.toml
-git add pyproject.toml
-git commit -m "chore: bump to v0.1.$((N-1)) for speedrun attempt ${N}"
+# Attempt 1: pyproject already carries 0.1.0, so the sed is a no-op — only
+# commit when there is a real change, or the commit fails on camera.
+git diff --quiet pyproject.toml || { git add pyproject.toml && \
+    git commit -m "chore: bump to v0.1.$((N-1)) for speedrun attempt ${N}"; }
 git push -u origin speedrun-attempt-${N}
 ```
 The tag `speedrun-spawn-v1` must point at current main (see issue #88 for the re-point). Verify:
@@ -86,7 +88,7 @@ Ctrl+Shift+R, scene S1, breathe for 5 seconds, then:
 gh issue list --repo martymcenroe/boostgauge --label lld-ready --state open
 ls src/
 ```
-Empty `src/`, six open issues. Say the mission out loud. Go.
+Empty `src/`, fourteen lld-ready issues on the board — today's arc is six of them (#7 → #41 → #1 → #4 → #2 → #5). Say the mission out loud. Go.
 
 ---
 
