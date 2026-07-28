@@ -21,6 +21,8 @@ Documentation = "https://github.com/martymcenroe/boostgauge/wiki"
 Issues = "https://github.com/martymcenroe/boostgauge/issues"
 "Built with AssemblyZero" = "https://github.com/martymcenroe/AssemblyZero"
 
+[project.scripts]
+boostgauge = "boostgauge.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -31,6 +33,9 @@ dev = [
     "pytest (>=9.0.3,<10.0.0)",
     "pytest-cov (>=7.1.0,<8.0.0)"
 ]
+
+[tool.poetry.scripts]
+boostgauge = "boostgauge.__main__:main"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
