@@ -43,3 +43,11 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-ra --strict-markers"
+
+[tool.coverage.report]
+fail_under = 89
+exclude_lines = [
+    "pragma: no cover",
+    "except OSError",
+    "except Exception",
+]
