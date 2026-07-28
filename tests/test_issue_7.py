@@ -22,10 +22,11 @@ def test_client():
 # Unit Tests
 # -----------
 
-def test_t001_auto_create_default_config_file_at_appda():
+def test_t001_auto_create_default_json_configuration_f():
     """
-    Auto-create default config file at `%APPDATA%\boostgauge\config.json`
-    on Windows on first execution when missing
+    Auto-create default JSON configuration file at isolated path using
+    `tmp_path` fixture. Assert `assert config_path.exists()` and `assert
+    json.loads(config_path.read_text())["theme"] == "dark"`.
 
     Requirement: REQ-1
     """
@@ -36,14 +37,17 @@ def test_t001_auto_create_default_config_file_at_appda():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t001_auto_create_default_config_file_at_appda works correctly
-    assert False, 'TDD RED: test_t001_auto_create_default_config_file_at_appda not implemented'
+    # Verify test_t001_auto_create_default_json_configuration_f works correctly
+    assert False, 'TDD RED: test_t001_auto_create_default_json_configuration_f not implemented'
 
 
-def test_t002_auto_create_default_config_file_at_boost():
+def test_t002_platform_specific_default_path_resolutio():
     """
-    Auto-create default config file at `~/.boostgauge/config.json` on
-    POSIX on first execution when missing
+    Platform-specific default path resolution logic verifying POSIX
+    (`~/.boostgauge/config.json`) vs. Windows
+    (`%APPDATA%\boostgauge\config.json`) using `monkeypatch.setenv` /
+    `monkeypatch.setattr`. Assert `assert get_default_config_path() ==
+    expected_path`.
 
     Requirement: REQ-1
     """
@@ -54,32 +58,18 @@ def test_t002_auto_create_default_config_file_at_boost():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t002_auto_create_default_config_file_at_boost works correctly
-    assert False, 'TDD RED: test_t002_auto_create_default_config_file_at_boost not implemented'
+    # Verify test_t002_platform_specific_default_path_resolutio works correctly
+    assert False, 'TDD RED: test_t002_platform_specific_default_path_resolutio not implemented'
 
 
-def test_t003_resolve_default_config_path_using_home_d():
+def test_t003_parse_cli_options_theme_size_poll_opacit():
     """
-    Resolve default config path using home directory fallback when
-    `%APPDATA%` environment variable is unset on Windows
-
-    Requirement: REQ-1
-    """
-    # TDD: Arrange
-    # Set up test data
-
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t003_resolve_default_config_path_using_home_d works correctly
-    assert False, 'TDD RED: test_t003_resolve_default_config_path_using_home_d not implemented'
-
-
-def test_t004_parse_valid_cli_options_theme_size_poll_():
-    """
-    Parse valid CLI options (`--theme`, `--size`, `--poll`, `--opacity`,
-    `--no-topmost`, `--config`, `--reset-config`) correctly
+    Parse CLI options (`--theme`, `--size`, `--poll`, `--opacity`,
+    `--no-topmost`, `--config`, `--reset-config`). Assert `assert
+    args.theme == "dark"`, `assert args.size == 300`, `assert args.poll ==
+    2`, `assert args.opacity == 0.9`, `assert args.no_topmost is True`,
+    `assert args.config == "custom.json"`, and `assert args.reset_config
+    is True`.
 
     Requirement: REQ-2
     """
@@ -90,16 +80,17 @@ def test_t004_parse_valid_cli_options_theme_size_poll_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t004_parse_valid_cli_options_theme_size_poll_ works correctly
-    assert False, 'TDD RED: test_t004_parse_valid_cli_options_theme_size_poll_ not implemented'
+    # Verify test_t003_parse_cli_options_theme_size_poll_opacit works correctly
+    assert False, 'TDD RED: test_t003_parse_cli_options_theme_size_poll_opacit not implemented'
 
 
-def test_t005_reject_invalid_cli_argument_type_inputs_():
+def test_t007_exception_handling_when_config_points_to():
     """
-    Reject invalid CLI argument type inputs (e.g., string passed to
-    numeric `--poll` or `--opacity` flags)
+    Exception handling when `--config` points to non-existent path.
+    Assert `with pytest.raises(FileNotFoundError):
+    load_config(non_existent_path)`.
 
-    Requirement: REQ-2
+    Requirement: REQ-5
     """
     # TDD: Arrange
     # Set up test data
@@ -108,14 +99,16 @@ def test_t005_reject_invalid_cli_argument_type_inputs_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t005_reject_invalid_cli_argument_type_inputs_ works correctly
-    assert False, 'TDD RED: test_t005_reject_invalid_cli_argument_type_inputs_ not implemented'
+    # Verify test_t007_exception_handling_when_config_points_to works correctly
+    assert False, 'TDD RED: test_t007_exception_handling_when_config_points_to not implemented'
 
 
-def test_t011_validate_setting_types_and_numeric_range():
+def test_t009_runtime_schema_validation_raising_valuee():
     """
-    Validate setting types and numeric ranges during loading and raise
-    `ValueError` with detailed context on invalid values
+    Runtime schema validation raising `ValueError` for out-of-range
+    numeric settings or invalid enum choices during load. Assert `with
+    pytest.raises(ValueError, match="Invalid opacity"):
+    load_config_from_dict({"opacity": 1.5})`.
 
     Requirement: REQ-7
     """
@@ -126,14 +119,15 @@ def test_t011_validate_setting_types_and_numeric_range():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t011_validate_setting_types_and_numeric_range works correctly
-    assert False, 'TDD RED: test_t011_validate_setting_types_and_numeric_range not implemented'
+    # Verify test_t009_runtime_schema_validation_raising_valuee works correctly
+    assert False, 'TDD RED: test_t009_runtime_schema_validation_raising_valuee not implemented'
 
 
-def test_t012_handle_malformed_or_corrupt_json_configu():
+def test_t010_exception_handling_for_cli_config_type_c():
     """
-    Handle malformed or corrupt JSON configuration files during load and
-    raise `ValueError`
+    Exception handling for CLI/Config type conversion errors when invalid
+    types are passed. Assert `with pytest.raises(ValueError):
+    merge_cli_overrides(config, {"size": "invalid_int"})`.
 
     Requirement: REQ-7
     """
@@ -144,14 +138,16 @@ def test_t012_handle_malformed_or_corrupt_json_configu():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t012_handle_malformed_or_corrupt_json_configu works correctly
-    assert False, 'TDD RED: test_t012_handle_malformed_or_corrupt_json_configu not implemented'
+    # Verify test_t010_exception_handling_for_cli_config_type_c works correctly
+    assert False, 'TDD RED: test_t010_exception_handling_for_cli_config_type_c not implemented'
 
 
-def test_t013_modify_active_resource_threshold_levels_():
+def test_t011_dynamic_threshold_modification_via_updat():
     """
-    Modify active resource threshold levels dynamically at runtime via
-    `update_thresholds` without app restart
+    Dynamic threshold modification via `update_thresholds` updates active
+    threshold levels in memory without application restart. Assert `assert
+    config.thresholds.conpty.yellow == 40.0` and `assert
+    config.thresholds.conpty.red == 70.0`.
 
     Requirement: REQ-8
     """
@@ -162,8 +158,8 @@ def test_t013_modify_active_resource_threshold_levels_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t013_modify_active_resource_threshold_levels_ works correctly
-    assert False, 'TDD RED: test_t013_modify_active_resource_threshold_levels_ not implemented'
+    # Verify test_t011_dynamic_threshold_modification_via_updat works correctly
+    assert False, 'TDD RED: test_t011_dynamic_threshold_modification_via_updat not implemented'
 
 
 
@@ -171,10 +167,12 @@ def test_t013_modify_active_resource_threshold_levels_():
 # -----------------
 
 @pytest.mark.integration
-def test_t006_apply_cli_argument_values_as_session_ove(test_client):
+def test_t004_apply_cli_argument_overrides_to_session_(test_client):
     """
-    Apply CLI argument values as session overrides in memory without
-    modifying the configuration file on disk
+    Apply CLI argument overrides to session memory without mutating disk
+    configuration using `tmp_path`. Assert `assert session_config.theme ==
+    "light"` and `assert json.loads(disk_file.read_text())["theme"] ==
+    "dark"`.
 
     Requirement: REQ-3
     """
@@ -185,15 +183,17 @@ def test_t006_apply_cli_argument_values_as_session_ove(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t006_apply_cli_argument_values_as_session_ove works correctly
-    assert False, 'TDD RED: test_t006_apply_cli_argument_values_as_session_ove not implemented'
+    # Verify test_t004_apply_cli_argument_overrides_to_session_ works correctly
+    assert False, 'TDD RED: test_t004_apply_cli_argument_overrides_to_session_ not implemented'
 
 
 @pytest.mark.integration
-def test_t007_overwrite_existing_disk_configuration_fi(test_client):
+def test_t005_pass_reset_config_cli_flag_to_overwrite_(test_client):
     """
-    Overwrite existing disk configuration file with default values when
-    `--reset-config` flag is passed before app initialization
+    Pass `--reset-config` CLI flag to overwrite disk configuration at
+    `tmp_path` with default settings before initialization. Assert `assert
+    json.loads(config_path.read_text())["theme"] == "dark"` after
+    overwrite.
 
     Requirement: REQ-4
     """
@@ -204,15 +204,16 @@ def test_t007_overwrite_existing_disk_configuration_fi(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t007_overwrite_existing_disk_configuration_fi works correctly
-    assert False, 'TDD RED: test_t007_overwrite_existing_disk_configuration_fi not implemented'
+    # Verify test_t005_pass_reset_config_cli_flag_to_overwrite_ works correctly
+    assert False, 'TDD RED: test_t005_pass_reset_config_cli_flag_to_overwrite_ not implemented'
 
 
 @pytest.mark.integration
-def test_t008_load_configuration_settings_from_designa(test_client):
+def test_t006_pass_config_path_cli_flag_to_load_config(test_client):
     """
-    Load configuration settings from designated file path specified by
-    `--config PATH` CLI flag
+    Pass `--config PATH` CLI flag to load configuration settings from
+    explicitly designated custom file path (`tmp_path / "custom.json"`).
+    Assert `assert config.theme == "custom_theme"`.
 
     Requirement: REQ-5
     """
@@ -223,34 +224,18 @@ def test_t008_load_configuration_settings_from_designa(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t008_load_configuration_settings_from_designa works correctly
-    assert False, 'TDD RED: test_t008_load_configuration_settings_from_designa not implemented'
+    # Verify test_t006_pass_config_path_cli_flag_to_load_config works correctly
+    assert False, 'TDD RED: test_t006_pass_config_path_cli_flag_to_load_config not implemented'
 
 
 @pytest.mark.integration
-def test_t009_handle_non_existent_target_file_path_sup(test_client):
+def test_t008_save_window_state_position_x_position_y_(test_client):
     """
-    Handle non-existent target file path supplied to `--config PATH` CLI
-    flag by raising appropriate file error
-
-    Requirement: REQ-5
-    """
-    # TDD: Arrange
-    # Set up test data
-
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t009_handle_non_existent_target_file_path_sup works correctly
-    assert False, 'TDD RED: test_t009_handle_non_existent_target_file_path_sup not implemented'
-
-
-@pytest.mark.integration
-def test_t010_save_window_position_position_x_position(test_client):
-    """
-    Save window position (`position.x`, `position.y`) and window size
-    (`size`) via `save_window_state` and restore on relaunch
+    Save window state (`position.x`, `position.y`, `size`) via
+    `save_window_state` to `tmp_path` on exit and restore on subsequent
+    launch. Assert `assert restored_config.position.x == 150`, `assert
+    restored_config.position.y == 200`, and `assert restored_config.size
+    == 350`.
 
     Requirement: REQ-6
     """
@@ -261,8 +246,8 @@ def test_t010_save_window_position_position_x_position(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t010_save_window_position_position_x_position works correctly
-    assert False, 'TDD RED: test_t010_save_window_position_position_x_position not implemented'
+    # Verify test_t008_save_window_state_position_x_position_y_ works correctly
+    assert False, 'TDD RED: test_t008_save_window_state_position_x_position_y_ not implemented'
 
 
 
@@ -270,12 +255,14 @@ def test_t010_save_window_position_position_x_position(test_client):
 # ---------
 
 @pytest.mark.e2e
-def test_t015_end_to_end_verification_of_cli_session_o(test_client):
+def test_t013_end_to_end_workflow_loading_custom_confi(test_client):
     """
-    End-to-end verification of CLI session overrides, configuration
-    persistence, and window state restoration across app launches
+    End-to-end workflow loading custom config via `--config`, dynamically
+    updating thresholds, saving window state on shutdown, and validating
+    state recovery on restart. Assert `assert reloaded_config.position.x
+    == 200` and `assert reloaded_config.thresholds.conpty.yellow == 45.0`.
 
-    Requirement: REQ-3
+    Requirement: REQ-5
     """
     # TDD: Arrange
     # Set up test data
@@ -284,18 +271,20 @@ def test_t015_end_to_end_verification_of_cli_session_o(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t015_end_to_end_verification_of_cli_session_o works correctly
-    assert False, 'TDD RED: test_t015_end_to_end_verification_of_cli_session_o not implemented'
+    # Verify test_t013_end_to_end_workflow_loading_custom_confi works correctly
+    assert False, 'TDD RED: test_t013_end_to_end_workflow_loading_custom_confi not implemented'
 
 
 
 # Other Tests
 # -----------
 
-def test_t014_execute_application_startup_smoke_test_c():
+def test_t012_application_smoke_test_verifying_initial():
     """
-    Execute application startup smoke test confirming default
-    configuration auto-creation and CLI argument initialization
+    Application smoke test verifying initialization, default config
+    creation, and CLI override merging using `tmp_path` and `monkeypatch`.
+    Assert `assert app.is_running is True` and `assert app.config.theme ==
+    "dark"`.
 
     Requirement: REQ-1
     """
@@ -306,6 +295,6 @@ def test_t014_execute_application_startup_smoke_test_c():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t014_execute_application_startup_smoke_test_c works correctly
-    assert False, 'TDD RED: test_t014_execute_application_startup_smoke_test_c not implemented'
+    # Verify test_t012_application_smoke_test_verifying_initial works correctly
+    assert False, 'TDD RED: test_t012_application_smoke_test_verifying_initial not implemented'
 
