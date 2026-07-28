@@ -1,0 +1,37 @@
+{
+  "polling_interval_seconds": 2.0,
+  "theme": "dark",
+  "size": 300,
+  "opacity": 0.9,
+  "always_on_top": true,
+  "position": {
+    "x": 100,
+    "y": 100
+  },
+  "thresholds": {
+    "conpty": {
+      "yellow": 30.0,
+      "red": 60.0
+    },
+    "memory_percent": {
+      "yellow": 60.0,
+      "red": 80.0
+    },
+    "process_count": {
+      "yellow": 300.0,
+      "red": 500.0
+    },
+    "handle_count": {
+      "yellow": 30000.0,
+      "red": 50000.0
+    }
+  },
+  "telltale_windows": {
+    "short": 60,
+    "medium": 600,
+    "long": 3600
+  },
+  "show_driver_label": true,
+  "show_digital_readout": true,
+  "show_session_count": true
+}
