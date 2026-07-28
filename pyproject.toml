@@ -21,6 +21,8 @@ Documentation = "https://github.com/martymcenroe/boostgauge/wiki"
 Issues = "https://github.com/martymcenroe/boostgauge/issues"
 "Built with AssemblyZero" = "https://github.com/martymcenroe/AssemblyZero"
 
+[project.scripts]
+boostgauge = "boostgauge.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -32,9 +34,20 @@ dev = [
     "pytest-cov (>=7.1.0,<8.0.0)"
 ]
 
+[tool.poetry.scripts]
+boostgauge = "boostgauge.__main__:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-ra --strict-markers"
+
+[tool.coverage.report]
+fail_under = 89
+exclude_lines = [
+    "pragma: no cover",
+    "except OSError",
+    "except Exception",
+]
