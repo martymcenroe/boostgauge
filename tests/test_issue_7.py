@@ -11,23 +11,16 @@ import pytest
 from boostgauge.config import *  # noqa: F401, F403
 
 
-# Integration/E2E fixtures
-@pytest.fixture
-def test_client():
-    """Test client for API calls."""
-    # TODO: Implement test client
-    yield None
-
-
 # Unit Tests
 # -----------
 
-def test_t001_verify_config_file_is_auto_created_with_():
+def test_t001_first_run_auto_creation_of_default_confi():
     """
-    Verify config file is auto-created with default values at platform
-    path (`%APPDATA%/boostgauge/config.json` on Windows or
-    `~/.boostgauge/config.json` on POSIX) on first run when missing, using
-    `tmp_path` and `monkeypatch` isolation fixtures
+    First-run auto-creation of default config file at platform path
+    (`%APPDATA%/boostgauge/config.json` / `~/.boostgauge/config.json`)
+    when file does not exist. Isolation: `pytest` `tmp_path` fixture,
+    `monkeypatch` path resolution. Assertions: `assert
+    config_path.exists()`, `assert config["theme"] == "dark"`.
 
     Requirement: REQ-1
     """
@@ -38,14 +31,15 @@ def test_t001_verify_config_file_is_auto_created_with_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t001_verify_config_file_is_auto_created_with_ works correctly
-    assert False, 'TDD RED: test_t001_verify_config_file_is_auto_created_with_ not implemented'
+    # Verify test_t001_first_run_auto_creation_of_default_confi works correctly
+    assert False, 'TDD RED: test_t001_first_run_auto_creation_of_default_confi not implemented'
 
 
-def test_t002_verify_cli_theme_parameter_overrides_loa():
+def test_t002_cli_theme_light_override_over_loaded_dis():
     """
-    Verify CLI `--theme` parameter overrides loaded disk and default
-    theme configuration values
+    CLI `--theme light` override over loaded disk configuration values.
+    Isolation: `pytest` `tmp_path` fixture. Assertions: `assert
+    config["theme"] == "light"`.
 
     Requirement: REQ-2
     """
@@ -56,14 +50,15 @@ def test_t002_verify_cli_theme_parameter_overrides_loa():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t002_verify_cli_theme_parameter_overrides_loa works correctly
-    assert False, 'TDD RED: test_t002_verify_cli_theme_parameter_overrides_loa not implemented'
+    # Verify test_t002_cli_theme_light_override_over_loaded_dis works correctly
+    assert False, 'TDD RED: test_t002_cli_theme_light_override_over_loaded_dis not implemented'
 
 
-def test_t003_verify_cli_size_parameter_overrides_load():
+def test_t003_cli_size_400_override_over_loaded_disk_c():
     """
-    Verify CLI `--size` parameter overrides loaded disk and default size
-    configuration values
+    CLI `--size 400` override over loaded disk configuration values.
+    Isolation: `pytest` `tmp_path` fixture. Assertions: `assert
+    config["size"] == 400`.
 
     Requirement: REQ-2
     """
@@ -74,14 +69,15 @@ def test_t003_verify_cli_size_parameter_overrides_load():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t003_verify_cli_size_parameter_overrides_load works correctly
-    assert False, 'TDD RED: test_t003_verify_cli_size_parameter_overrides_load not implemented'
+    # Verify test_t003_cli_size_400_override_over_loaded_disk_c works correctly
+    assert False, 'TDD RED: test_t003_cli_size_400_override_over_loaded_disk_c not implemented'
 
 
-def test_t004_verify_cli_poll_parameter_overrides_load():
+def test_t004_cli_poll_0_5_override_over_loaded_disk_c():
     """
-    Verify CLI `--poll` parameter overrides loaded disk and default
-    polling interval configuration values
+    CLI `--poll 0.5` override over loaded disk configuration values.
+    Isolation: `pytest` `tmp_path` fixture. Assertions: `assert
+    config["polling_interval_seconds"] == 0.5`.
 
     Requirement: REQ-2
     """
@@ -92,14 +88,15 @@ def test_t004_verify_cli_poll_parameter_overrides_load():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t004_verify_cli_poll_parameter_overrides_load works correctly
-    assert False, 'TDD RED: test_t004_verify_cli_poll_parameter_overrides_load not implemented'
+    # Verify test_t004_cli_poll_0_5_override_over_loaded_disk_c works correctly
+    assert False, 'TDD RED: test_t004_cli_poll_0_5_override_over_loaded_disk_c not implemented'
 
 
-def test_t005_verify_cli_opacity_parameter_overrides_l():
+def test_t005_valid_cli_opacity_0_8_override_over_load():
     """
-    Verify CLI `--opacity` parameter overrides loaded disk and default
-    opacity configuration values
+    Valid CLI `--opacity 0.8` override over loaded configuration values.
+    Isolation: `pytest` `tmp_path` fixture. Assertions: `assert
+    config["opacity"] == 0.8`.
 
     Requirement: REQ-2
     """
@@ -110,14 +107,15 @@ def test_t005_verify_cli_opacity_parameter_overrides_l():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t005_verify_cli_opacity_parameter_overrides_l works correctly
-    assert False, 'TDD RED: test_t005_verify_cli_opacity_parameter_overrides_l not implemented'
+    # Verify test_t005_valid_cli_opacity_0_8_override_over_load works correctly
+    assert False, 'TDD RED: test_t005_valid_cli_opacity_0_8_override_over_load not implemented'
 
 
-def test_t006_verify_cli_no_topmost_parameter_override():
+def test_t006_cli_no_topmost_flag_override_setting_alw():
     """
-    Verify CLI `--no-topmost` parameter overrides loaded disk and default
-    `always_on_top` configuration values
+    CLI `--no-topmost` flag override setting `always_on_top` to false.
+    Isolation: `pytest` `tmp_path` fixture. Assertions: `assert
+    config["always_on_top"] is False`.
 
     Requirement: REQ-2
     """
@@ -128,15 +126,15 @@ def test_t006_verify_cli_no_topmost_parameter_override():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t006_verify_cli_no_topmost_parameter_override works correctly
-    assert False, 'TDD RED: test_t006_verify_cli_no_topmost_parameter_override not implemented'
+    # Verify test_t006_cli_no_topmost_flag_override_setting_alw works correctly
+    assert False, 'TDD RED: test_t006_cli_no_topmost_flag_override_setting_alw not implemented'
 
 
-def test_t007_verify_custom_config_path_specified_via_():
+def test_t007_specify_custom_config_file_path_via_cli_():
     """
-    Verify custom config path specified via `--config PATH` CLI argument
-    loads configuration from specified path instead of default location
-    (isolated via `tmp_path`)
+    Specify custom config file path via CLI `--config PATH` and load
+    settings from that path. Isolation: `pytest` `tmp_path` fixture.
+    Assertions: `assert loaded_config["theme"] == "custom_theme"`.
 
     Requirement: REQ-3
     """
@@ -147,15 +145,16 @@ def test_t007_verify_custom_config_path_specified_via_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t007_verify_custom_config_path_specified_via_ works correctly
-    assert False, 'TDD RED: test_t007_verify_custom_config_path_specified_via_ not implemented'
+    # Verify test_t007_specify_custom_config_file_path_via_cli_ works correctly
+    assert False, 'TDD RED: test_t007_specify_custom_config_file_path_via_cli_ not implemented'
 
 
-def test_t008_verify_cli_reset_config_argument_resets_():
+def test_t008_cli_reset_config_flag_resets_target_conf():
     """
-    Verify CLI `--reset-config` argument resets configuration file at
-    target config path to default values and persists to disk (isolated
-    via `tmp_path`)
+    CLI `--reset-config` flag resets target configuration file on disk to
+    default values and saves it. Isolation: `pytest` `tmp_path` fixture
+    with pre-modified config file. Assertions: `assert config["theme"] ==
+    "dark"`, `assert path.read_text()` matches defaults.
 
     Requirement: REQ-4
     """
@@ -166,14 +165,16 @@ def test_t008_verify_cli_reset_config_argument_resets_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t008_verify_cli_reset_config_argument_resets_ works correctly
-    assert False, 'TDD RED: test_t008_verify_cli_reset_config_argument_resets_ not implemented'
+    # Verify test_t008_cli_reset_config_flag_resets_target_conf works correctly
+    assert False, 'TDD RED: test_t008_cli_reset_config_flag_resets_target_conf not implemented'
 
 
-def test_t009_verify_window_position_x_y_and_size_para():
+def test_t009_window_position_x_y_and_size_parameters_():
     """
-    Verify window position (`x`, `y`) and size parameters are saved to
-    config file on application exit (isolated via `tmp_path`)
+    Window position (`x`, `y`) and size parameters are saved to
+    configuration file on application exit. Isolation: `pytest` `tmp_path`
+    fixture. Assertions: `assert saved_config["position"] == {"x": 200,
+    "y": 300}`, `assert saved_config["size"] == 400`.
 
     Requirement: REQ-5
     """
@@ -184,15 +185,38 @@ def test_t009_verify_window_position_x_y_and_size_para():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t009_verify_window_position_x_y_and_size_para works correctly
-    assert False, 'TDD RED: test_t009_verify_window_position_x_y_and_size_para not implemented'
+    # Verify test_t009_window_position_x_y_and_size_parameters_ works correctly
+    assert False, 'TDD RED: test_t009_window_position_x_y_and_size_parameters_ not implemented'
 
 
-def test_t011_verify_dynamic_threshold_updates_and_run():
+def test_t010_window_position_x_y_and_size_parameters_():
     """
-    Verify dynamic threshold updates and runtime configuration changes
-    re-validate and take effect immediately in memory without requiring
-    application restart
+    Window position (`x`, `y`) and size parameters are restored from
+    configuration file on application launch. Isolation: `pytest`
+    `tmp_path` fixture with saved geometry. Assertions: `assert
+    app.window_x == 200`, `assert app.window_y == 300`, `assert
+    app.window_size == 400`.
+
+    Requirement: REQ-5
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t010_window_position_x_y_and_size_parameters_ works correctly
+    assert False, 'TDD RED: test_t010_window_position_x_y_and_size_parameters_ not implemented'
+
+
+def test_t011_dynamic_metric_threshold_updates_re_vali():
+    """
+    Dynamic metric threshold updates re-validate and take effect
+    immediately in memory without application restart. Isolation:
+    In-memory configuration state. Assertions: `assert
+    config["thresholds"]["conpty"]["yellow"] == 25.0`, `assert
+    active_thresholds_updated is True`.
 
     Requirement: REQ-6
     """
@@ -203,15 +227,16 @@ def test_t011_verify_dynamic_threshold_updates_and_run():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t011_verify_dynamic_threshold_updates_and_run works correctly
-    assert False, 'TDD RED: test_t011_verify_dynamic_threshold_updates_and_run not implemented'
+    # Verify test_t011_dynamic_metric_threshold_updates_re_vali works correctly
+    assert False, 'TDD RED: test_t011_dynamic_metric_threshold_updates_re_vali not implemented'
 
 
-def test_t012_verify_invalid_json_content_in_config_fi():
+def test_t012_corrupted_or_invalid_json_content_in_con():
     """
-    Verify invalid JSON content in config file produces clear error
-    message and raises controlled `ConfigError` exception (isolated via
-    `tmp_path`)
+    Corrupted or invalid JSON content in config file produces clear error
+    message and raises controlled error. Isolation: `pytest` `tmp_path`
+    fixture with invalid JSON. Assertions: `with
+    pytest.raises(ConfigError): load_config(path)`.
 
     Requirement: REQ-7
     """
@@ -222,14 +247,16 @@ def test_t012_verify_invalid_json_content_in_config_fi():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t012_verify_invalid_json_content_in_config_fi works correctly
-    assert False, 'TDD RED: test_t012_verify_invalid_json_content_in_config_fi not implemented'
+    # Verify test_t012_corrupted_or_invalid_json_content_in_con works correctly
+    assert False, 'TDD RED: test_t012_corrupted_or_invalid_json_content_in_con not implemented'
 
 
-def test_t013_verify_invalid_theme_name_in_configurati():
+def test_t013_invalid_theme_name_in_cli_argument_or_co():
     """
-    Verify invalid theme name in configuration or CLI produces clear
-    error message and raises controlled `ConfigError` validation exception
+    Invalid theme name in CLI argument or config file produces clear
+    error message and raises controlled error. Isolation: `pytest`
+    `tmp_path` fixture. Assertions: `with pytest.raises(ConfigError):
+    validate_config({"theme": "invalid_theme"})`.
 
     Requirement: REQ-7
     """
@@ -240,15 +267,16 @@ def test_t013_verify_invalid_theme_name_in_configurati():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t013_verify_invalid_theme_name_in_configurati works correctly
-    assert False, 'TDD RED: test_t013_verify_invalid_theme_name_in_configurati not implemented'
+    # Verify test_t013_invalid_theme_name_in_cli_argument_or_co works correctly
+    assert False, 'TDD RED: test_t013_invalid_theme_name_in_cli_argument_or_co not implemented'
 
 
-def test_t014_verify_negative_opacity_or_opacity_outsi():
+def test_t014_out_of_range_negative_opacity_e_g_0_5_or():
     """
-    Verify negative opacity or opacity outside 0.0–1.0 range in
-    configuration or CLI produces clear error message and raises
-    controlled `ConfigError` validation exception
+    Out-of-range negative opacity (e.g. `-0.5`) or opacity > 1.0 produces
+    clear error message and raises controlled error. Isolation: `pytest`
+    `tmp_path` fixture. Assertions: `with pytest.raises(ConfigError):
+    validate_config({"opacity": -0.5})`.
 
     Requirement: REQ-7
     """
@@ -259,15 +287,16 @@ def test_t014_verify_negative_opacity_or_opacity_outsi():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t014_verify_negative_opacity_or_opacity_outsi works correctly
-    assert False, 'TDD RED: test_t014_verify_negative_opacity_or_opacity_outsi not implemented'
+    # Verify test_t014_out_of_range_negative_opacity_e_g_0_5_or works correctly
+    assert False, 'TDD RED: test_t014_out_of_range_negative_opacity_e_g_0_5_or not implemented'
 
 
-def test_t015_verify_non_positive_polling_interval_0_i():
+def test_t015_non_positive_polling_interval_e_g_0_0_or():
     """
-    Verify non-positive polling interval (<= 0) in configuration or CLI
-    produces clear error message and raises controlled `ConfigError`
-    validation exception
+    Non-positive polling interval (e.g. `0.0` or `-1.0`) produces clear
+    error message and raises controlled error. Isolation: `pytest`
+    `tmp_path` fixture. Assertions: `with pytest.raises(ConfigError):
+    validate_config({"polling_interval_seconds": 0.0})`.
 
     Requirement: REQ-7
     """
@@ -278,15 +307,16 @@ def test_t015_verify_non_positive_polling_interval_0_i():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t015_verify_non_positive_polling_interval_0_i works correctly
-    assert False, 'TDD RED: test_t015_verify_non_positive_polling_interval_0_i not implemented'
+    # Verify test_t015_non_positive_polling_interval_e_g_0_0_or works correctly
+    assert False, 'TDD RED: test_t015_non_positive_polling_interval_e_g_0_0_or not implemented'
 
 
-def test_t016_verify_non_positive_window_size_0_in_con():
+def test_t016_non_positive_window_size_e_g_0_or_100_pr():
     """
-    Verify non-positive window size (<= 0) in configuration or CLI
-    produces clear error message and raises controlled `ConfigError`
-    validation exception
+    Non-positive window size (e.g. `0` or `-100`) produces clear error
+    message and raises controlled error. Isolation: `pytest` `tmp_path`
+    fixture. Assertions: `with pytest.raises(ConfigError):
+    validate_config({"size": 0})`.
 
     Requirement: REQ-7
     """
@@ -297,29 +327,6 @@ def test_t016_verify_non_positive_window_size_0_in_con():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t016_verify_non_positive_window_size_0_in_con works correctly
-    assert False, 'TDD RED: test_t016_verify_non_positive_window_size_0_in_con not implemented'
-
-
-
-# Integration Tests
-# -----------------
-
-@pytest.mark.integration
-def test_t010_verify_window_geometry_position_x_y_and_(test_client):
-    """
-    Verify window geometry (position `x`, `y` and window `size`)
-    restoration from saved configuration file on application launch
-
-    Requirement: REQ-5
-    """
-    # TDD: Arrange
-    # Set up test data
-
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t010_verify_window_geometry_position_x_y_and_ works correctly
-    assert False, 'TDD RED: test_t010_verify_window_geometry_position_x_y_and_ not implemented'
+    # Verify test_t016_non_positive_window_size_e_g_0_or_100_pr works correctly
+    assert False, 'TDD RED: test_t016_non_positive_window_size_e_g_0_or_100_pr not implemented'
 
