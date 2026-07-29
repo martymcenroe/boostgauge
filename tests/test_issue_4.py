@@ -11,36 +11,24 @@ import pytest
 from boostgauge.collector import *  # noqa: F401, F403
 
 
-# Fixtures for mocking
+# Integration/E2E fixtures
 @pytest.fixture
-def mock_external_service():
-    """Mock external service for isolation."""
-    # TODO: Implement mock
+def test_client():
+    """Test client for API calls."""
+    # TODO: Implement test client
     yield None
 
 
 # Unit Tests
 # -----------
 
-def test_id():
+def test_t001_enumerate_conpty_count_by_inspecting_con():
     """
-    Test Description | Expected Behavior | Status
-    """
-    # TDD: Arrange
-    # Set up test data
+    Enumerate ConPTY count by inspecting conhost.exe processes and
+    Windows Terminal pseudo-consoles using mocked process lists at 2s
+    intervals
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_id works correctly
-    assert False, 'TDD RED: test_id not implemented'
-
-
-def test_t010():
-    """
-    ConPTY process counting | Correctly identifies conhost.exe and
-    WindowsTerminal processes | RED
+    Requirement: REQ-1
     """
     # TDD: Arrange
     # Set up test data
@@ -49,30 +37,16 @@ def test_t010():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t010 works correctly
-    assert False, 'TDD RED: test_t010 not implemented'
+    # Verify test_t001_enumerate_conpty_count_by_inspecting_con works correctly
+    assert False, 'TDD RED: test_t001_enumerate_conpty_count_by_inspecting_con not implemented'
 
 
-def test_t020(mock_external_service):
+def test_t002_collect_virtual_memory_percentage_total_():
     """
-    System metric polling (memory, process, handle) | Polled values match
-    mock psutil returns | RED
-    """
-    # TDD: Arrange
-    # Set up test data
+    Collect virtual memory percentage, total process count, and handle
+    count accurately across configured sampling intervals
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t020 works correctly
-    assert False, 'TDD RED: test_t020 not implemented'
-
-
-def test_t030():
-    """
-    Unleashed session command line detection | Counts python processes
-    matching unleashed-c-*.py pattern | RED
+    Requirement: REQ-2
     """
     # TDD: Arrange
     # Set up test data
@@ -81,30 +55,17 @@ def test_t030():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t030 works correctly
-    assert False, 'TDD RED: test_t030 not implemented'
+    # Verify test_t002_collect_virtual_memory_percentage_total_ works correctly
+    assert False, 'TDD RED: test_t002_collect_virtual_memory_percentage_total_ not implemented'
 
 
-def test_t040():
+def test_t003_detect_active_unleashed_sessions_by_matc():
     """
-    Threading queue pushing and non-blocking retrieval | Background
-    thread pushes snapshot to queue without blocking UI | RED
-    """
-    # TDD: Arrange
-    # Set up test data
+    Detect active Unleashed sessions by matching Python processes
+    executing unleashed-c-*.py scripts in command line arguments at 5s
+    intervals
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t040 works correctly
-    assert False, 'TDD RED: test_t040 not implemented'
-
-
-def test_t050():
-    """
-    Permission error grace | AccessDenied on process cmdline does not
-    crash collector thread | RED
+    Requirement: REQ-3
     """
     # TDD: Arrange
     # Set up test data
@@ -113,30 +74,17 @@ def test_t050():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t050 works correctly
-    assert False, 'TDD RED: test_t050 not implemented'
+    # Verify test_t003_detect_active_unleashed_sessions_by_matc works correctly
+    assert False, 'TDD RED: test_t003_detect_active_unleashed_sessions_by_matc not implemented'
 
 
-def test_t060():
+def test_t004_verify_collector_polling_runs_asynchrono():
     """
-    CPU overhead budget | Collector loop stays under 1.0% CPU overhead
-    during continuous 2s polling | RED
-    """
-    # TDD: Arrange
-    # Set up test data
+    Verify collector polling runs asynchronously in a non-blocking
+    background thread and pushes SystemSnapshot objects to thread-safe
+    Queue
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_t060 works correctly
-    assert False, 'TDD RED: test_t060 not implemented'
-
-
-def test_t070():
-    """
-    Composite normalized-max calculation and driver selection | Correctly
-    computes 0-100 gauge score and identifies max driving metric | RED
+    Requirement: REQ-4
     """
     # TDD: Arrange
     # Set up test data
@@ -145,33 +93,17 @@ def test_t070():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t070 works correctly
-    assert False, 'TDD RED: test_t070 not implemented'
+    # Verify test_t004_verify_collector_polling_runs_asynchrono works correctly
+    assert False, 'TDD RED: test_t004_verify_collector_polling_runs_asynchrono not implemented'
 
 
-def test_010(mock_external_service):
+def test_t005_gracefully_catch_and_handle_psutil_acces():
     """
-    ConPTY process count calculation (REQ-1) | Auto | Mocked process
-    table with 5 conhost.exe processes | `conpty_count == 5` | Exact
-    integer match returned
-    """
-    # TDD: Arrange
-    # Set up test data
+    Gracefully catch and handle psutil.AccessDenied permission error
+    during process inspection using mocked exception without crashing or
+    stopping background thread
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_010 works correctly
-    assert False, 'TDD RED: test_010 not implemented'
-
-
-def test_020(mock_external_service):
-    """
-    Fast system metrics collection (REQ-2) | Auto | Mocked
-    `psutil.virtual_memory().percent = 45.5` and 150 processes |
-    `memory_percent == 45.5`, `process_count == 150` | Snapshot fields
-    match mocked metr
+    Requirement: REQ-5
     """
     # TDD: Arrange
     # Set up test data
@@ -180,32 +112,17 @@ def test_020(mock_external_service):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_020 works correctly
-    assert False, 'TDD RED: test_020 not implemented'
+    # Verify test_t005_gracefully_catch_and_handle_psutil_acces works correctly
+    assert False, 'TDD RED: test_t005_gracefully_catch_and_handle_psutil_acces not implemented'
 
 
-def test_030(mock_external_service):
+def test_t006_gracefully_catch_and_handle_psutil_nosuc():
     """
-    Handle count aggregation (REQ-2) | Auto | Mocked handle count
-    aggregation totaling 45,000 handles | `handle_count == 45000` |
-    Aggregated handle count matches mock
-    """
-    # TDD: Arrange
-    # Set up test data
+    Gracefully catch and handle psutil.NoSuchProcess error during process
+    inspection using mocked exception without crashing or stopping
+    background thread
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_030 works correctly
-    assert False, 'TDD RED: test_030 not implemented'
-
-
-def test_040(mock_external_service):
-    """
-    Unleashed python session command line detection (REQ-3) | Auto |
-    Mocked python processes with `['python.exe', 'unleashed-c-123.py']` |
-    `unleashed_sessions == 1` | Correct session count detected
+    Requirement: REQ-5
     """
     # TDD: Arrange
     # Set up test data
@@ -214,32 +131,17 @@ def test_040(mock_external_service):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_040 works correctly
-    assert False, 'TDD RED: test_040 not implemented'
+    # Verify test_t006_gracefully_catch_and_handle_psutil_nosuc works correctly
+    assert False, 'TDD RED: test_t006_gracefully_catch_and_handle_psutil_nosuc not implemented'
 
 
-def test_050():
+def test_t007_gracefully_catch_and_handle_winerror_per():
     """
-    Non-blocking background thread queue push (REQ-4) | Auto |
-    `collector.start()`, wait 2.5s, call `get_latest_snapshot()` | Returns
-    valid `SystemSnapshot` object | Queue receives snapshot without thread
-    """
-    # TDD: Arrange
-    # Set up test data
+    Gracefully catch and handle WinError permission error during
+    process/handle query using mocked exception without crashing or
+    stopping background thread
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_050 works correctly
-    assert False, 'TDD RED: test_050 not implemented'
-
-
-def test_060():
-    """
-    Graceful handling of psutil AccessDenied permission error (REQ-5) |
-    Auto | Process `cmdline()` raises `psutil.AccessDenied()` | Collector
-    thread continues; snapshot generated | No unhandled exception
+    Requirement: REQ-5
     """
     # TDD: Arrange
     # Set up test data
@@ -248,33 +150,17 @@ def test_060():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_060 works correctly
-    assert False, 'TDD RED: test_060 not implemented'
+    # Verify test_t007_gracefully_catch_and_handle_winerror_per works correctly
+    assert False, 'TDD RED: test_t007_gracefully_catch_and_handle_winerror_per not implemented'
 
 
-def test_070():
+def test_t009_compute_composite_metric_value_using_nor():
     """
-    Collector CPU overhead measurement (REQ-6) | Auto | Run
-    `WindowsCollector` loop for 10 seconds under load | Measured thread
-    CPU utilization < 1.0% | Performance budget requirement met
-    """
-    # TDD: Arrange
-    # Set up test data
+    Compute composite metric value using normalized-max algorithm on a
+    0.0-100.0 scale and correctly identify driving metric key with
+    tie-breaking rules
 
-    # TDD: Act
-    # Call the function under test
-
-    # TDD: Assert
-    # Verify test_070 works correctly
-    assert False, 'TDD RED: test_070 not implemented'
-
-
-def test_080():
-    """
-    Composite normalized-max calculation and driver key assignment
-    (REQ-7) | Auto | ConPTY count at 95% threshold, memory at 30%
-    threshold | `composite_value == 95.0`, `driver == "conpty"` |
-    Normalized ma
+    Requirement: REQ-7
     """
     # TDD: Arrange
     # Set up test data
@@ -283,6 +169,93 @@ def test_080():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_080 works correctly
-    assert False, 'TDD RED: test_080 not implemented'
+    # Verify test_t009_compute_composite_metric_value_using_nor works correctly
+    assert False, 'TDD RED: test_t009_compute_composite_metric_value_using_nor not implemented'
+
+
+
+# Integration Tests
+# -----------------
+
+@pytest.mark.integration
+def test_t010_integration_test_verifying_background_th(test_client):
+    """
+    Integration test verifying background thread lifecycle, fast (2s) and
+    heavy (5s) metric collection staggering, and snapshot queueing
+
+    Requirement: REQ-1
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t010_integration_test_verifying_background_th works correctly
+    assert False, 'TDD RED: test_t010_integration_test_verifying_background_th not implemented'
+
+
+
+# E2E Tests
+# ---------
+
+@pytest.mark.e2e
+def test_t012_end_to_end_data_collector_verification_u(test_client):
+    """
+    End-to-end data collector verification under process load with
+    background thread execution and permission error recovery
+
+    Requirement: REQ-4
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t012_end_to_end_data_collector_verification_u works correctly
+    assert False, 'TDD RED: test_t012_end_to_end_data_collector_verification_u not implemented'
+
+
+
+# Other Tests
+# -----------
+
+def test_t008_measure_collector_background_thread_cpu_():
+    """
+    Measure collector background thread CPU consumption at default
+    2-second polling intervals to ensure execution overhead stays below
+    1.0% CPU
+
+    Requirement: REQ-6
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t008_measure_collector_background_thread_cpu_ works correctly
+    assert False, 'TDD RED: test_t008_measure_collector_background_thread_cpu_ not implemented'
+
+
+def test_t011_smoke_test_verifying_windowscollector_in():
+    """
+    Smoke test verifying WindowsCollector instantiation, thread
+    start/stop lifecycle, and initial SystemSnapshot generation
+
+    Requirement: REQ-4
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t011_smoke_test_verifying_windowscollector_in works correctly
+    assert False, 'TDD RED: test_t011_smoke_test_verifying_windowscollector_in not implemented'
 
