@@ -37,4 +37,7 @@ testpaths = ["tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
-addopts = "-ra --strict-markers"
+# importlib mode: the tiered test tree (unit/visual/integration) may reuse
+# basenames like test_gauge.py; default prepend mode dies at collection on
+# the first duplicate (#129 — killed pipeline phase 3 three times).
+addopts = "-ra --strict-markers --import-mode=importlib"
