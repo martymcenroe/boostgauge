@@ -11,24 +11,12 @@ import pytest
 from boostgauge.skins.stingray import *  # noqa: F401, F403
 
 
-# Integration/E2E fixtures
-@pytest.fixture
-def test_client():
-    """Test client for API calls."""
-    # TODO: Implement test client
-    yield None
-
-
 # Unit Tests
 # -----------
 
-def test_t001_verify_render_value_telltales_size_confi():
+def test_id():
     """
-    Verify `render(value, telltales, size, config)` is a pure function
-    returning a PIL `Image.Image` without side effects or importing
-    `tkinter`.
-
-    Requirement: REQ-1
+    Test Description | Expected Behavior | Status
     """
     # TDD: Arrange
     # Set up test data
@@ -37,17 +25,14 @@ def test_t001_verify_render_value_telltales_size_confi():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t001_verify_render_value_telltales_size_confi works correctly
-    assert False, 'TDD RED: test_t001_verify_render_value_telltales_size_confi not implemented'
+    # Verify test_id works correctly
+    assert False, 'TDD RED: test_id not implemented'
 
 
-def test_t002_verify_input_clamping_for_value_outside_():
+def test_t010():
     """
-    Verify input clamping for `value` outside [0.0, 100.0] boundaries and
-    `size` inputs under 128x128 px, confirming default size resolves to
-    256x256 px.
-
-    Requirement: REQ-2
+    Pure function rendering test | Returns `PIL.Image.Image` without
+    importing `tkinter` | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -56,17 +41,14 @@ def test_t002_verify_input_clamping_for_value_outside_():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t002_verify_input_clamping_for_value_outside_ works correctly
-    assert False, 'TDD RED: test_t002_verify_input_clamping_for_value_outside_ not implemented'
+    # Verify test_t010 works correctly
+    assert False, 'TDD RED: test_t010 not implemented'
 
 
-def test_t003_verify_needle_angle_linear_function_accu():
+def test_t020():
     """
-    Verify needle angle linear function accurately maps value 0.0 to
-    225°, value 50.0 to 90°, and value 100.0 to -45° over a continuous
-    270° arc.
-
-    Requirement: REQ-3
+    Input clamping and bounds validation | Values <0 clamped to 0, >100
+    clamped to 100, size <128 clamped to 128 | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -75,17 +57,13 @@ def test_t003_verify_needle_angle_linear_function_accu():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t003_verify_needle_angle_linear_function_accu works correctly
-    assert False, 'TDD RED: test_t003_verify_needle_angle_linear_function_accu not implemented'
+    # Verify test_t020 works correctly
+    assert False, 'TDD RED: test_t020 not implemented'
 
 
-def test_t008_verify_skin_architecture_decouples_sting():
+def test_t030():
     """
-    Verify skin architecture decouples Stingray rendering into
-    `src/boostgauge/skins/stingray.py` implementing `SkinProtocol` so
-    `render()` operates without skin-specific hardcoding.
-
-    Requirement: REQ-8
+    Angle mapping calculation test | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -94,17 +72,14 @@ def test_t008_verify_skin_architecture_decouples_sting():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t008_verify_skin_architecture_decouples_sting works correctly
-    assert False, 'TDD RED: test_t008_verify_skin_architecture_decouples_sting not implemented'
+    # Verify test_t030 works correctly
+    assert False, 'TDD RED: test_t030 not implemented'
 
 
-def test_t010_verify_baseline_image_management_enforce():
+def test_t040():
     """
-    Verify baseline image management enforces strict requirement for
-    `--generate-baselines` flag when creating or updating images in
-    `tests/visual/baselines/`.
-
-    Requirement: REQ-10
+    Baseline visual regression at rest (value=0, telltales=None) | RMS
+    pixel diff against baseline <= 1.0/255 | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -113,22 +88,14 @@ def test_t010_verify_baseline_image_management_enforce():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t010_verify_baseline_image_management_enforce works correctly
-    assert False, 'TDD RED: test_t010_verify_baseline_image_management_enforce not implemented'
+    # Verify test_t040 works correctly
+    assert False, 'TDD RED: test_t040 not implemented'
 
 
-
-# Integration Tests
-# -----------------
-
-@pytest.mark.integration
-def test_t005_verify_telltale_needles_render_behind_ma(test_client):
+def test_t050():
     """
-    Verify telltale needles render behind main needle with 60–70% opacity
-    using assigned colors (1m cyan, 10m orange, 1h magenta, all-time red)
-    when specified, and are omitted when `telltales=None`.
-
-    Requirement: REQ-5
+    Telltale needle visibility and opacity | 4 translucent needles
+    rendered behind main needle when present | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -137,18 +104,14 @@ def test_t005_verify_telltale_needles_render_behind_ma(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t005_verify_telltale_needles_render_behind_ma works correctly
-    assert False, 'TDD RED: test_t005_verify_telltale_needles_render_behind_ma not implemented'
+    # Verify test_t050 works correctly
+    assert False, 'TDD RED: test_t050 not implemented'
 
 
-@pytest.mark.integration
-def test_t006_verify_continuous_upper_redline_arc_rend(test_client):
+def test_t060():
     """
-    Verify continuous upper redline arc rendering from value 60 to 100
-    along the outer tick ring edge, remaining visually distinct behind the
-    main needle.
-
-    Requirement: REQ-6
+    Post-reset telltale removal test | Telltale set to None removes
+    corresponding secondary needle | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -157,19 +120,14 @@ def test_t006_verify_continuous_upper_redline_arc_rend(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t006_verify_continuous_upper_redline_arc_rend works correctly
-    assert False, 'TDD RED: test_t006_verify_continuous_upper_redline_arc_rend not implemented'
+    # Verify test_t060 works correctly
+    assert False, 'TDD RED: test_t060 not implemented'
 
 
-@pytest.mark.integration
-def test_t007_inspect_gauge_face_layout_rendering_for_(test_client):
+def test_t070():
     """
-    Inspect gauge face layout rendering for square chromed bezel with
-    specular highlights, recessed round dial, 11 major tick marks, 40
-    minor tick marks, Eurostile numerals (0–100), and white "BOOSTGAUGE"
-    wordmark.
-
-    Requirement: REQ-7
+    Redline arc visual distinction | Value=75 renders needle over redline
+    arc cleanly | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -178,23 +136,14 @@ def test_t007_inspect_gauge_face_layout_rendering_for_(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t007_inspect_gauge_face_layout_rendering_for_ works correctly
-    assert False, 'TDD RED: test_t007_inspect_gauge_face_layout_rendering_for_ not implemented'
+    # Verify test_t070 works correctly
+    assert False, 'TDD RED: test_t070 not implemented'
 
 
-
-# E2E Tests
-# ---------
-
-@pytest.mark.e2e
-def test_t004_compare_rendered_image_at_rest_state_val(test_client):
+def test_t080():
     """
-    Compare rendered image at rest state (`value=0`, `telltales=None`)
-    against canonical baseline
-    `images/aesthetic-v1-stingray-canonical.jpg` asserting pixel-RMS error
-    <= 1.0/255.
-
-    Requirement: REQ-4
+    Gauge element composition test | Bezel, ticks, numerals, and wordmark
+    present in image | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -203,20 +152,14 @@ def test_t004_compare_rendered_image_at_rest_state_val(test_client):
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t004_compare_rendered_image_at_rest_state_val works correctly
-    assert False, 'TDD RED: test_t004_compare_rendered_image_at_rest_state_val not implemented'
+    # Verify test_t080 works correctly
+    assert False, 'TDD RED: test_t080 not implemented'
 
 
-
-# Other Tests
-# -----------
-
-def test_t009_execute_off_screen_render_tier_test_suit():
+def test_t090():
     """
-    Execute off-screen render-tier test suite via PIL under Option C
-    headless configuration without instantiating `tkinter.Tk()`.
-
-    Requirement: REQ-9
+    Skin protocol routing test | `gauge.render()` dispatches to
+    `skins/stingray.py` | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -225,6 +168,227 @@ def test_t009_execute_off_screen_render_tier_test_suit():
     # Call the function under test
 
     # TDD: Assert
-    # Verify test_t009_execute_off_screen_render_tier_test_suit works correctly
-    assert False, 'TDD RED: test_t009_execute_off_screen_render_tier_test_suit not implemented'
+    # Verify test_t090 works correctly
+    assert False, 'TDD RED: test_t090 not implemented'
+
+
+def test_t100():
+    """
+    Baseline generation CLI flag test | Missing baseline fails unless
+    `--generate-baselines` flag is set | RED
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t100 works correctly
+    assert False, 'TDD RED: test_t100 not implemented'
+
+
+def test_010():
+    """
+    Pure function off-screen invocation without GUI (REQ-1) | Auto |
+    `value=0.0, telltales=None, size=256` | `PIL.Image.Image` object |
+    Returns PIL Image instance without side effects or `tkinter` imports
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_010 works correctly
+    assert False, 'TDD RED: test_010 not implemented'
+
+
+def test_020():
+    """
+    Out-of-bounds scalar value clamping (REQ-2) | Auto | `value=-15.0`
+    and `value=125.0` | Clamped internally to `0.0` and `100.0` | Output
+    byte-identical to `render(0.0)` and `render(100.0)` respectively
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_020 works correctly
+    assert False, 'TDD RED: test_020 not implemented'
+
+
+def test_030():
+    """
+    Minimum size restriction enforcement (REQ-2) | Auto | `size=64` |
+    Image resized to 128x128 px | `img.size == (128, 128)` (REQ-2)
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_030 works correctly
+    assert False, 'TDD RED: test_030 not implemented'
+
+
+def test_040():
+    """
+    Deterministic needle angle mapping across sweep (REQ-3) | Auto |
+    `value=0, 50, 100` | Calculated angles 225.0°, 90.0°, -45.0° | Angles
+    match linear mapping formula within 0.001° tolerance (REQ-3)
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_040 works correctly
+    assert False, 'TDD RED: test_040 not implemented'
+
+
+def test_050():
+    """
+    Rest state visual regression vs canonical baseline (REQ-4) | Auto |
+    `value=0, telltales=None, size=256` |
+    `tests/visual/baselines/test_stingray_rest.png` comparison | RMS pixel
+    difference <= 1.0/255 a
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_050 works correctly
+    assert False, 'TDD RED: test_050 not implemented'
+
+
+def test_060():
+    """
+    Translucent telltale needle rendering (REQ-5) | Auto |
+    `telltales={'m1': 50, 'm10': 70, 'h1': 85, 'all': 95}` | Secondary
+    needles rendered behind main needle | All 4 needles visible with
+    60–70% opacit
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_060 works correctly
+    assert False, 'TDD RED: test_060 not implemented'
+
+
+def test_070():
+    """
+    Post-reset telltale needle removal (REQ-5) | Auto | `telltales={'m1':
+    None, 'm10': None, 'h1': None, 'all': None}` | Gauge image with main
+    needle only | Output byte-identical to `telltales=None` state
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_070 works correctly
+    assert False, 'TDD RED: test_070 not implemented'
+
+
+def test_080():
+    """
+    Redline arc visual contrast at value=75 (REQ-6) | Auto | `value=75.0,
+    telltales=None` | Needle rendered inside 60-100 redline zone | Main
+    needle readable and visually distinct over redline arc (REQ-6)
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_080 works correctly
+    assert False, 'TDD RED: test_080 not implemented'
+
+
+def test_090():
+    """
+    Comprehensive face markings and housing layout (REQ-7) | Auto |
+    `value=0, size=256` | Image containing bezel, 11 major ticks, 40 minor
+    ticks, numerals 0-100, wordmark | Visual layout matches Stingray
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_090 works correctly
+    assert False, 'TDD RED: test_090 not implemented'
+
+
+def test_100():
+    """
+    Skin architecture protocol decoupling (REQ-8) | Auto |
+    `config={'skin': 'stingray'}` | Dispatched execution to `stingray.py`
+    | `render()` delegates to skin module without hardcoding (REQ-8)
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_100 works correctly
+    assert False, 'TDD RED: test_100 not implemented'
+
+
+def test_110():
+    """
+    Headless CI execution without Tk display (REQ-9) | Auto | Headless
+    environment (no `DISPLAY` / Windows GUI context) | Successful PIL
+    image generation | Runs cleanly in headless test suite (REQ-9)
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_110 works correctly
+    assert False, 'TDD RED: test_110 not implemented'
+
+
+def test_120():
+    """
+    Baseline auto-accept prevention check (REQ-10) | Auto | Missing
+    baseline image without `--generate-baselines` | `pytest.fail` with
+    missing baseline error | Test fails explicitly unless flag is present
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_120 works correctly
+    assert False, 'TDD RED: test_120 not implemented'
 
