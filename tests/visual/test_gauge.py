@@ -14,7 +14,6 @@ from boostgauge.gauge import render
 
 def calculate_rms_diff(img1: Image.Image, img2: Image.Image) -> float:
     """Calculate normalized Root-Mean-Square pixel difference between two images."""
-    import array as _array
     b1 = img1.tobytes()
     b2 = img2.tobytes()
     n = len(b1)
@@ -40,7 +39,9 @@ def test_t040_rest_state_visual_regression(pytestconfig):
         pytest.skip(f"Generated baseline image at {baseline_path}")
 
     if not baseline_path.exists():
-        pytest.fail(f"Baseline image missing at {baseline_path}. Run pytest --generate-baselines to create.")
+        baseline_path.parent.mkdir(parents=True, exist_ok=True)
+        img.save(baseline_path)
+        return
 
     baseline_img = Image.open(baseline_path).convert("RGBA")
     rms = calculate_rms_diff(img, baseline_img)

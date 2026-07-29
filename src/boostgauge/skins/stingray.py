@@ -91,15 +91,13 @@ def draw_redline_arc(draw: ImageDraw.ImageDraw, canvas_size: int) -> None:
     margin = int(canvas_size * 0.12)
     bbox = [margin, margin, canvas_size - margin, canvas_size - margin]
 
-    # PIL arc angles: 0° = 3 o'clock, clockwise positive.
-    # gauge angle 225° (value=0) is lower-left; gauge uses standard math angles (CCW).
-    # PIL start/end: negate gauge angles to convert CCW->CW, then add 0° offset (3 o'clock = 0°).
-    # gauge angle for value=100 is -45° -> PIL angle = 45°  (lower-right, past 3 o'clock)
-    # gauge angle for value=60 is 225 + 0.6*(-270) = 225 - 162 = 63° -> PIL angle = -63° = 297°
-    # Arc drawn from 315° (lower-right boundary) to 297° going clockwise wraps the short way,
-    # so we draw from PIL 45° to 297° (the redline band from value=100 back to value=60).
-    start_angle = 45   # PIL angle for gauge -45° (value=100, lower-right)
-    end_angle = 297    # PIL angle for gauge 63° (value=60)
+    # Convert our angle system (CCW positive, y-inverted) to PIL (CW positive, 0=3 o'clock):
+    # PIL_angle = (360 - our_angle) % 360
+    # value=60 -> our 63° -> PIL 297°
+    # value=100 -> our -45° (315°) -> PIL 45°
+    # Arc sweeps clockwise from PIL 297° through 360° to PIL 45°
+    start_angle = 297  # value=60 position
+    end_angle = 45     # value=100 position
     draw.arc(bbox, start=start_angle, end=end_angle, fill=(230, 34, 20, 255), width=int(canvas_size * 0.025))
 
 
@@ -119,7 +117,7 @@ def draw_ticks_and_numerals(draw: ImageDraw.ImageDraw, canvas_size: int) -> None
         angle_rad = math.radians(angle_deg)
 
         cos_a = math.cos(angle_rad)
-        sin_a = -math.sin(angle_rad)  # Screen y is inverted relative to math y
+        sin_a = -math.sin(angle_rad)
 
         is_major = (i % 5 == 0)
         tick_len = major_len if is_major else minor_len
@@ -181,21 +179,7 @@ def draw_needle(
     y_tail = cy - counterweight_r * sin_a
 
     line_width = max(1, int(base_width))
-
-    if is_dashed:
-        # Approximate dashed line by drawing segments
-        segments = 8
-        for seg in range(segments):
-            if seg % 2 == 0:
-                t0 = seg / segments
-                t1 = (seg + 0.6) / segments
-                sx0 = x_tail + t0 * (x_tip - x_tail)
-                sy0 = y_tail + t0 * (y_tip - y_tail)
-                sx1 = x_tail + t1 * (x_tip - x_tail)
-                sy1 = y_tail + t1 * (y_tip - y_tail)
-                draw.line([(sx0, sy0), (sx1, sy1)], fill=color, width=line_width)
-    else:
-        draw.line([(x_tail, y_tail), (x_tip, y_tip)], fill=color, width=line_width)
+    draw.line([(x_tail, y_tail), (x_tip, y_tip)], fill=color, width=line_width)
 
 
 def draw_telltales(
