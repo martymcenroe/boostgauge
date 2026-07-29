@@ -39,8 +39,8 @@ def test_id():
 
 def test_t010():
     """
-    Test ConPTY process counting accuracy | Accurately counts conhost.exe
-    and pseudo-consoles | RED
+    Test `SystemSnapshot` field types and immutability | Fields match
+    dataclass definition | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -55,8 +55,8 @@ def test_t010():
 
 def test_t020():
     """
-    Test process count & memory % via psutil | Matches psutil output
-    values | RED
+    Test `DataCollector` abstract methods and default thread lifecycle |
+    Thread starts, runs, and stops cleanly | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -69,10 +69,10 @@ def test_t020():
     assert False, 'TDD RED: test_t020 not implemented'
 
 
-def test_t030():
+def test_t030(mock_external_service):
     """
-    Test handle count aggregation | Aggregates system process handle
-    totals | RED
+    Test `WindowsCollector.count_conpty_instances` with mock processes |
+    Returns correct conhost + OpenConsole count | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -85,10 +85,10 @@ def test_t030():
     assert False, 'TDD RED: test_t030 not implemented'
 
 
-def test_t040():
+def test_t040(mock_external_service):
     """
-    Test Unleashed session script detection | Detects python processes
-    running unleashed-c-*.py | RED
+    Test process count and memory percentage polling | Matches mocked
+    `psutil` return values | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -103,8 +103,8 @@ def test_t040():
 
 def test_t050():
     """
-    Test SystemSnapshot dataclass creation | Instantiates frozen
-    dataclass snapshot | RED
+    Test handle count aggregation with `AccessDenied` processes |
+    Aggregates accessible handles without throwing exception | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -119,8 +119,8 @@ def test_t050():
 
 def test_t060():
     """
-    Test composite metric normalized-max math | Correctly normalizes
-    metrics and identifies driver | RED
+    Test `count_unleashed_sessions` detection | Correctly identifies
+    `unleashed-c-*.py` in python cmdlines | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -135,8 +135,8 @@ def test_t060():
 
 def test_t070():
     """
-    Test thread start/stop lifecycle & queue | Pushes snapshots
-    asynchronously to thread queue | RED
+    Test `calculate_composite_value` normalized max calculation |
+    Computes piecewise 0-100 score and dominant driver | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -151,8 +151,8 @@ def test_t070():
 
 def test_t080():
     """
-    Test permission error fallback handling | Fallbacks to last valid
-    metric on AccessDenied | RED
+    Test `calculate_composite_value` driver tie-breaking | Breaks ties
+    deterministically via priority order | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -167,8 +167,8 @@ def test_t080():
 
 def test_t090():
     """
-    Test polling CPU overhead budget | Background thread consumes <1% CPU
-    | RED
+    Test background thread queue pushing | Snapshots pushed to queue at
+    poll interval | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -183,8 +183,8 @@ def test_t090():
 
 def test_t100():
     """
-    Test platform factory get_collector | Returns WindowsCollector on
-    win32 platform | RED
+    Test background thread stop event response | Thread stops within 1
+    second of `stop()` | RED
     """
     # TDD: Arrange
     # Set up test data
@@ -197,11 +197,27 @@ def test_t100():
     assert False, 'TDD RED: test_t100 not implemented'
 
 
-def test_010(mock_external_service):
+def test_t110():
     """
-    ConPTY process counting accuracy under normal and elevated conhost
-    allocations (REQ-2) | Auto | Mocked process list with 5 conhost.exe
-    processes | `conpty_count == 5` | Exact integer match
+    Test `get_collector` platform factory function | Instantiates
+    `WindowsCollector` on `win32` | RED
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_t110 works correctly
+    assert False, 'TDD RED: test_t110 not implemented'
+
+
+def test_010():
+    """
+    Happy path SystemSnapshot dataclass construction (REQ-1) | Auto |
+    Valid scalar metric inputs | Immutably instantiated `SystemSnapshot`
+    object | All fields match input types and values
     """
     # TDD: Arrange
     # Set up test data
@@ -214,11 +230,11 @@ def test_010(mock_external_service):
     assert False, 'TDD RED: test_010 not implemented'
 
 
-def test_020(mock_external_service):
+def test_020():
     """
-    System process count and virtual memory percentage retrieval via
-    psutil (REQ-3) | Auto | Mocked `psutil.virtual_memory()` at 65.5% and
-    120 processes | `memory_percent == 65.5`, `process_count == 120`
+    DataCollector abstract base class interface and thread lifecycle
+    (REQ-2) | Auto | Concrete subclass invocation | Thread starts and
+    stops on `start()`/`stop()` | `is_running()` reflects thread state
     """
     # TDD: Arrange
     # Set up test data
@@ -233,9 +249,10 @@ def test_020(mock_external_service):
 
 def test_030(mock_external_service):
     """
-    Handle count aggregation across system processes every 5s poll cycle
-    (REQ-4) | Auto | Mocked handle counts [100, 200, 300] | `handle_count
-    == 600` | Sum equals aggregate total
+    ConPTY process counting via conhost and pseudo-console detection
+    (REQ-3) | Auto | Mocked process list containing conhost and
+    OpenConsole | `conpty_count` integer count | Matches exact count of
+    matchin
     """
     # TDD: Arrange
     # Set up test data
@@ -250,9 +267,9 @@ def test_030(mock_external_service):
 
 def test_040(mock_external_service):
     """
-    Unleashed session process scanning matching unleashed-c-*.py cmdlines
-    (REQ-5) | Auto | Mocked process table containing 3 unleashed session
-    scripts | `unleashed_sessions == 3` | Accurate detection coun
+    Process count and virtual memory percentage collection via psutil
+    (REQ-4) | Auto | Mocked `psutil.pids()` and `psutil.virtual_memory()`
+    | Matching `process_count` and `memory_percent` | Values match m
     """
     # TDD: Arrange
     # Set up test data
@@ -267,9 +284,9 @@ def test_040(mock_external_service):
 
 def test_050():
     """
-    SystemSnapshot data structure instantiation and immutability (REQ-1)
-    | Auto | Construct `SystemSnapshot(...)` instance | Frozen fields,
-    correct attributes | Attribute assignment succeeds, frozen mutat
+    Handle count aggregation with AccessDenied error handling (REQ-5) |
+    Auto | Process list with select `AccessDenied` exceptions | Aggregated
+    handle count of accessible processes | No exception raised; h
     """
     # TDD: Arrange
     # Set up test data
@@ -282,11 +299,11 @@ def test_050():
     assert False, 'TDD RED: test_050 not implemented'
 
 
-def test_060():
+def test_060(mock_external_service):
     """
-    Composite metric normalized-max calculation and driver identification
-    (REQ-6) | Auto | ConPTY=90 (thresh=100), Memory=30% (thresh=100) |
-    `composite_value == 90.0`, `driver == 'conpty'` | Correct max s
+    Unleashed session counting via python process command lines (REQ-6) |
+    Auto | Mocked python processes with `unleashed-c-*.py` args |
+    `unleashed_sessions` count | Matches count of matching python sessio
     """
     # TDD: Arrange
     # Set up test data
@@ -301,9 +318,9 @@ def test_060():
 
 def test_070():
     """
-    Background thread lifecycle start/stop and thread-safe queue snapshot
-    delivery (REQ-7) | Auto | Start collector, poll for 4 seconds, call
-    stop() | Queue receives snapshots, thread terminates cleanly |
+    Composite value piecewise normalization and driver identification
+    (REQ-7) | Auto | Raw metric values vs default threshold limits |
+    Normalized max score (0-100) and metric driver string | Piecewise int
     """
     # TDD: Arrange
     # Set up test data
@@ -316,12 +333,11 @@ def test_070():
     assert False, 'TDD RED: test_070 not implemented'
 
 
-def test_080(mock_external_service):
+def test_080():
     """
-    Graceful recovery and fallback when psutil or Win32 API raises
-    AccessDenied/PermissionError (REQ-8) | Auto | Mock
-    `psutil.process_iter()` raising `AccessDenied` | Collector logs
-    warning, uses cached s
+    Composite value tie-breaking deterministic priority ordering (REQ-7)
+    | Auto | Two metrics with identical normalized max scores | Highest
+    priority metric selected as driver | Driver matches determinist
     """
     # TDD: Arrange
     # Set up test data
@@ -336,9 +352,9 @@ def test_080(mock_external_service):
 
 def test_090():
     """
-    Background thread CPU consumption measurement verifying <1% CPU
-    overhead at 2s interval (REQ-9) | Auto | Run collector loop for 10s
-    under test harness | CPU overhead < 1.0% | CPU measurement within bu
+    Non-blocking background collector thread execution and queue delivery
+    (REQ-8) | Auto | Collector `start()` with 0.05s poll interval |
+    `queue.Queue` populated with snapshots | Queue contains snapshots;
     """
     # TDD: Arrange
     # Set up test data
@@ -353,9 +369,9 @@ def test_090():
 
 def test_100():
     """
-    Factory function get_collector instantiation on Windows and fallback
-    platforms (REQ-10) | Auto | `sys.platform == 'win32'` vs `'linux'` |
-    `WindowsCollector` on win32, `DataCollector` base on linux | C
+    Background thread CPU overhead verification (< 1% CPU utilization)
+    (REQ-8) | Auto | 100 snapshot polling iterations | High-frequency
+    polling execution timing | CPU iteration execution overhead negligi
     """
     # TDD: Arrange
     # Set up test data
@@ -366,4 +382,21 @@ def test_100():
     # TDD: Assert
     # Verify test_100 works correctly
     assert False, 'TDD RED: test_100 not implemented'
+
+
+def test_110(mock_external_service):
+    """
+    Factory get_collector instantiation and platform fallback (REQ-9) |
+    Auto | `sys.platform` set to `win32` vs `linux` | `WindowsCollector`
+    on win32; base stub elsewhere | Correct collector type returned
+    """
+    # TDD: Arrange
+    # Set up test data
+
+    # TDD: Act
+    # Call the function under test
+
+    # TDD: Assert
+    # Verify test_110 works correctly
+    assert False, 'TDD RED: test_110 not implemented'
 
