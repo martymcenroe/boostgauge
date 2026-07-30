@@ -6,7 +6,7 @@ Issue #41: Telltale peak-hold needle logic (pure, no GUI)
 from __future__ import annotations
 
 from collections import deque
-from typing import Optional, Tuple
+from typing import Dict, Literal, Optional, Tuple, TypedDict
 
 
 class Telltale:
@@ -105,3 +105,69 @@ class Telltale:
         self._max_deque.clear()
         self._best_expired_key = None
         self._latest_timestamp = None
+
+
+WindowKey = Literal["m1", "m10", "h1", "all"]
+
+
+class TelltaleDict(TypedDict, total=False):
+    """Dictionary mapping telltale window keys to current peak values (0.0 to 100.0 or None)."""
+    m1: Optional[float]
+    m10: Optional[float]
+    h1: Optional[float]
+    all: Optional[float]
+
+
+class WindowConfig(TypedDict):
+    """Configuration mapping window key to duration in seconds."""
+    key: WindowKey
+    duration: float
+
+
+class TelltaleManager:
+    """Manages lifecycle, metric routing, state extraction, and resets for 4 telltale windows."""
+
+    def __init__(self) -> None:
+        """Initialize 4 Telltale instances with 60s, 600s, 3600s, and inf windows."""
+        self.telltales: Dict[WindowKey, Telltale] = {
+            "m1": Telltale(window=60.0),
+            "m10": Telltale(window=600.0),
+            "h1": Telltale(window=3600.0),
+            "all": Telltale(window=float("inf")),
+        }
+        self._last_timestamp: Optional[float] = None
+
+    def update(self, timestamp: float, value: float) -> None:
+        """Pipe incoming sample timestamp and metric value to all four Telltale instances."""
+        if timestamp < 0:
+            raise ValueError("Timestamp must be non-negative")
+        if self._last_timestamp is not None and timestamp < self._last_timestamp:
+            raise ValueError("Timestamp must be monotonically non-decreasing")
+        self._last_timestamp = timestamp
+        for telltale in self.telltales.values():
+            telltale.update(timestamp, value)
+
+    def get_peaks(self, timestamp: Optional[float] = None) -> TelltaleDict:
+        """Extract current peak values for all windows formatted as a TelltaleDict."""
+        eval_ts = timestamp if timestamp is not None else self._last_timestamp
+        return {
+            "m1": self.telltales["m1"].current_peak(eval_ts),
+            "m10": self.telltales["m10"].current_peak(eval_ts),
+            "h1": self.telltales["h1"].current_peak(eval_ts),
+            "all": self.telltales["all"].current_peak(eval_ts),
+        }
+
+    def reset(self, window_key: Optional[str] = None) -> None:
+        """Reset specified telltale window ('m1', 'm10', 'h1', 'all'), or reset all if window_key is None or 'all_windows'."""
+        if window_key is None or window_key == "all_windows":
+            self.reset_all()
+        elif window_key in self.telltales:
+            self.telltales[window_key].reset()  # type: ignore[index]
+        else:
+            raise ValueError(f"Unknown window key: {window_key}")
+
+    def reset_all(self) -> None:
+        """Reset all four telltale instances to cleared state."""
+        for telltale in self.telltales.values():
+            telltale.reset()
+        self._last_timestamp = None
