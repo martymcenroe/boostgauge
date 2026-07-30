@@ -28,7 +28,15 @@ class SystemSnapshot:
 
 
 def normalize_metric(value: float, threshold: float) -> float:
-    """Normalize raw metric value against a threshold to 0-100 scale."""
+    """Normalize raw metric value against a threshold to 0-100 scale.
+
+    Args:
+        value: Raw metric numeric value.
+        threshold: Critical threshold value corresponding to 100%.
+
+    Returns:
+        Normalized float between 0.0 and 100.0.
+    """
     if threshold <= 0.0 or value <= 0.0:
         return 0.0
     normalized = (value / threshold) * 100.0
@@ -42,14 +50,25 @@ def calculate_composite_metric(
     handle_cnt: int,
     thresholds: Optional[Dict[str, Dict[str, float]]] = None,
 ) -> Tuple[float, str]:
-    """Calculate composite load score using normalized-max algorithm."""
+    """Calculate composite load score using normalized-max algorithm.
+
+    Args:
+        conpty: Raw ConPTY process count.
+        memory_pct: System memory utilization percentage (0-100).
+        process_cnt: Total active process count.
+        handle_cnt: Total process open handle count.
+        thresholds: Metric threshold dictionary.
+
+    Returns:
+        Tuple of (composite_value, driver_metric_name).
+    """
     defaults = {
         "conpty": {"critical": 10.0},
         "memory": {"critical": 100.0},
         "process": {"critical": 500.0},
         "handle": {"critical": 100000.0},
     }
-    cfg = thresholds or defaults
+    cfg = thresholds if thresholds else defaults
 
     conpty_thresh = cfg.get("conpty", {}).get("critical", 10.0)
     memory_thresh = cfg.get("memory", {}).get("critical", 100.0)
@@ -91,7 +110,9 @@ class DataCollector:
     def collect_snapshot(self) -> SystemSnapshot:
         """Collect current system metrics and return a SystemSnapshot."""
         now = time.time()
-        comp_val, driver = calculate_composite_metric(0, 0.0, 0, 0, self.config.get("thresholds"))
+        comp_val, driver = calculate_composite_metric(
+            0, 0.0, 0, 0, self.config.get("thresholds")
+        )
         return SystemSnapshot(
             timestamp=now,
             conpty_count=0,

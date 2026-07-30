@@ -61,15 +61,16 @@ def test_collect_conpty_count_access_denied():
     """T070: Test that AccessDenied on individual process is skipped gracefully."""
     p1 = MagicMock()
     p1.info = {"name": "conhost.exe"}
+
     p2 = MagicMock()
-    p2.info = {"name": "conhost.exe"}
-    p2.info.__getitem__ = MagicMock(side_effect=psutil.AccessDenied(pid=2))
+    p2.info = MagicMock()
+    p2.info.get = MagicMock(side_effect=psutil.AccessDenied(pid=2))
 
     p3 = MagicMock()
     p3.info = {"name": "conhost.exe"}
 
     collector = WindowsCollector()
-    with patch("psutil.process_iter", return_value=[p1, p3]):
+    with patch("psutil.process_iter", return_value=[p1, p2, p3]):
         count = collector.collect_conpty_count()
         assert count == 2
 
@@ -301,7 +302,7 @@ def test_windows_collector_snapshot_timestamp():
 def test_windows_collector_heavy_metrics_staggered():
     """T060: Test that heavy metrics are only collected every heavy_sample_ratio iterations."""
     collector = WindowsCollector(config={"heavy_sample_ratio": 3})
-    collector._last_handles = 50000
+    collector._last_handles = 99999
     collector._last_unleashed = 2
 
     with patch.object(collector, "collect_conpty_count", return_value=1), patch.object(

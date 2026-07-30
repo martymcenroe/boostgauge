@@ -4,10 +4,10 @@ Issue #4: Windows data collector — ConPTY, processes, memory, handles
 """
 
 import logging
-import queue
 import re
 import time
 from typing import Any, Dict, Optional, Set
+import queue
 
 import psutil
 
@@ -127,6 +127,8 @@ class WindowsCollector(DataCollector):
         if self._iteration_count % self.heavy_sample_ratio == 0:
             handles = self.collect_handle_count()
             unleashed = self.collect_unleashed_sessions()
+            self._last_handles = handles
+            self._last_unleashed = unleashed
         else:
             handles = self._last_handles
             unleashed = self._last_unleashed
