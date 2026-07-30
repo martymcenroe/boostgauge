@@ -72,3 +72,36 @@ def test_t070_redline_arc_visual_distinction():
     img_redline = render(value=75.0, size=256)
     assert isinstance(img_redline, Image.Image)
     assert img_redline.size == (256, 256)
+
+
+def test_t080_four_distinct_telltale_needles_rendering():
+    """Verify gauge render with 4 active telltale peaks differs from rest state."""
+    rest_img = render(0.0, telltales=None)
+    telltale_img = render(
+        0.0,
+        telltales={"m1": 25.0, "m10": 50.0, "h1": 75.0, "all": 90.0}
+    )
+    rms_diff = calculate_rms_diff(rest_img, telltale_img)
+    assert rms_diff > 0.01, f"Expected visual difference from telltales, got RMS diff {rms_diff}"
+
+
+def test_t090_telltale_baseline_independent_needle_positions():
+    """Baseline-independent assertion: Verify pixel changes occur along expected needle vectors."""
+    rest_img = render(0.0, telltales=None)
+    telltale_img = render(
+        0.0,
+        telltales={"m1": 50.0, "m10": None, "h1": None, "all": None}
+    )
+    w, h = rest_img.size
+    cx, cy = w // 2, h // 2
+
+    rest_pixels = rest_img.load()
+    telltale_pixels = telltale_img.load()
+
+    diffs = 0
+    for y in range(cy - 60, cy - 20):
+        for x in range(cx - 5, cx + 5):
+            if rest_pixels[x, y] != telltale_pixels[x, y]:
+                diffs += 1
+
+    assert diffs > 0, "Baseline-independent check failed: No pixel modifications detected along 50% needle vector"
