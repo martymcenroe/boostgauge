@@ -9,6 +9,7 @@ import threading
 from typing import Callable, Literal, Optional
 
 from PIL import Image, ImageDraw
+
 import pystray
 
 
