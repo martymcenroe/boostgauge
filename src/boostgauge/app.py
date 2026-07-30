@@ -1,6 +1,6 @@
 """Application runtime controller integrating configuration lifecycle.
 
-Issue #7: Configuration File and CLI Arguments
+Issue #5: always-on-top window with drag, minimize, and transparency (#5)
 """
 
 from __future__ import annotations

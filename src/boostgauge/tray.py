@@ -7,8 +7,8 @@ from __future__ import annotations
 
 import threading
 from typing import Callable, Literal, Optional
-from PIL import Image, ImageDraw
 
+from PIL import Image, ImageDraw
 import pystray
 
 
@@ -46,7 +46,6 @@ class TrayManager:
         on_reset_telltales: Optional[Callable[[], None]] = None,
         on_toggle_topmost: Optional[Callable[[], None]] = None,
     ) -> None:
-        """Initialize tray manager with interaction callback handlers."""
         self.on_restore = on_restore
         self.on_quit = on_quit
         self.on_reset_telltales = on_reset_telltales
@@ -67,7 +66,6 @@ class TrayManager:
         self.icon = pystray.Icon("boostgauge", initial_icon, "BoostGauge Monitor", menu)
 
     def _safe_invoke(self, callback: Optional[Callable[[], None]]) -> None:
-        """Invoke callback safely if provided."""
         if callback:
             callback()
 
