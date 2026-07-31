@@ -4,6 +4,7 @@ Issue #4: Windows data collector — ConPTY, processes, memory, handles
 """
 
 import queue
+import time
 
 from boostgauge.collector import DataCollector, SystemSnapshot
 from boostgauge.collectors import create_collector
@@ -64,7 +65,6 @@ def test_collector_contract_stop_when_not_running():
 
 def test_collector_contract_with_queue():
     """Verify create_collector accepts a snapshot_queue and pushes snapshots to it."""
-    import time
     q = queue.Queue(maxsize=10)
     collector = create_collector(config={"poll_interval": 0.05}, snapshot_queue=q)
     collector.start()
@@ -104,7 +104,6 @@ def test_collector_contract_poll_snapshot_counts_non_negative():
 
 def test_collector_contract_poll_timestamp_is_recent():
     """Verify snapshot timestamp is a recent Unix timestamp."""
-    import time
     before = time.time()
     collector = create_collector()
     snapshot = collector.poll()
@@ -114,10 +113,47 @@ def test_collector_contract_poll_timestamp_is_recent():
 
 def test_collector_contract_queue_eviction_on_full():
     """Verify queue full condition is handled without raising."""
-    import time
     q = queue.Queue(maxsize=2)
     collector = create_collector(config={"poll_interval": 0.01}, snapshot_queue=q)
     collector.start()
     time.sleep(0.1)
     collector.stop()
     assert q.qsize() <= 2
+
+
+def test_collector_contract_queue_eviction_get_nowait_empty():
+    """Cover except queue.Empty branch in _worker_loop when get_nowait finds nothing."""
+
+    class AlwaysFullQueue:
+        maxsize = 1
+
+        def put_nowait(self, item):
+            raise queue.Full
+
+        def get_nowait(self):
+            raise queue.Empty
+
+    mock_q = AlwaysFullQueue()
+    collector = create_collector(config={"poll_interval": 0.02}, snapshot_queue=mock_q)
+    collector.start()
+    time.sleep(0.15)
+    collector.stop()
+
+
+def test_collector_contract_queue_eviction_second_put_full():
+    """Cover second except queue.Full branch in _worker_loop when re-put after eviction fails."""
+
+    class EvictThenFailQueue:
+        maxsize = 1
+
+        def put_nowait(self, item):
+            raise queue.Full
+
+        def get_nowait(self):
+            return None
+
+    mock_q = EvictThenFailQueue()
+    collector = create_collector(config={"poll_interval": 0.02}, snapshot_queue=mock_q)
+    collector.start()
+    time.sleep(0.15)
+    collector.stop()

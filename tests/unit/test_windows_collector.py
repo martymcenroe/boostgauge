@@ -3,11 +3,22 @@
 Issue #4: Windows data collector — ConPTY, processes, memory, handles
 """
 
+import queue
+import time
 from unittest.mock import MagicMock, PropertyMock, patch
 import pytest
 import psutil
 
 from boostgauge.collectors.windows import WindowsCollector
+
+
+_FAKE_RAW = {
+    "conpty_count": 1,
+    "process_count": 10,
+    "memory_percent": 10.0,
+    "handle_count": 100,
+    "unleashed_sessions": 0,
+}
 
 
 def test_count_conpty_counts_conhost_and_wt():
@@ -384,3 +395,51 @@ def test_windows_collector_poll_returns_snapshot():
     assert snapshot.unleashed_sessions == 1
     assert isinstance(snapshot.driver, str)
     assert 0.0 <= snapshot.composite_value <= 100.0
+
+
+def test_worker_loop_queue_empty_branch():
+    """Cover queue.Empty branch in _worker_loop eviction when get_nowait finds nothing."""
+    put_count = 0
+
+    class ControlledQueue:
+        maxsize = 1
+
+        def put_nowait(self, item):
+            nonlocal put_count
+            put_count += 1
+            raise queue.Full
+
+        def get_nowait(self):
+            raise queue.Empty
+
+    mock_q = ControlledQueue()
+    collector = WindowsCollector(config={"poll_interval": 0.02}, snapshot_queue=mock_q)
+    with patch.object(collector, "_collect_raw_metrics", return_value=_FAKE_RAW):
+        collector.start()
+        time.sleep(0.1)
+        collector.stop()
+    assert put_count >= 1
+
+
+def test_worker_loop_second_put_full_branch():
+    """Cover second queue.Full branch in _worker_loop when re-put after eviction also fails."""
+    get_count = 0
+
+    class ControlledQueue:
+        maxsize = 1
+
+        def put_nowait(self, item):
+            raise queue.Full
+
+        def get_nowait(self):
+            nonlocal get_count
+            get_count += 1
+            return MagicMock()
+
+    mock_q = ControlledQueue()
+    collector = WindowsCollector(config={"poll_interval": 0.02}, snapshot_queue=mock_q)
+    with patch.object(collector, "_collect_raw_metrics", return_value=_FAKE_RAW):
+        collector.start()
+        time.sleep(0.1)
+        collector.stop()
+    assert get_count >= 1

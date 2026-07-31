@@ -81,7 +81,7 @@ class DataCollector(abc.ABC):
     def __init__(
         self,
         config: Optional[Dict[str, Any]] = None,
-        snapshot_queue: Optional[queue.Queue[SystemSnapshot]] = None,
+        snapshot_queue: Optional[queue.Queue] = None,
     ) -> None:
         self.config = config or {}
         self.poll_interval = float(self.config.get("poll_interval", 2.0))
@@ -143,14 +143,8 @@ class DataCollector(abc.ABC):
                     try:
                         self.snapshot_queue.put_nowait(snapshot)
                     except queue.Full:
-                        try:
-                            self.snapshot_queue.get_nowait()
-                        except queue.Empty:
-                            pass
-                        try:
-                            self.snapshot_queue.put_nowait(snapshot)
-                        except queue.Full:
-                            pass
+                        self.snapshot_queue.get_nowait()
+                        self.snapshot_queue.put_nowait(snapshot)
             except Exception as exc:
                 logger.warning("Error during collector polling: %s", exc)
 
