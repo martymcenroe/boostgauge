@@ -32,6 +32,9 @@ dev = [
     "pytest-cov (>=7.1.0,<8.0.0)"
 ]
 
+[tool.poetry.scripts]
+boostgauge = "boostgauge.__main__:main"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
