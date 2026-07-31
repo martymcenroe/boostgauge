@@ -179,7 +179,9 @@ def load_config_file(path: Path) -> GaugeConfigDict:
             data = json.load(f)
     except json.JSONDecodeError as exc:
         raise ConfigError(f"Malformed JSON in config file '{path}': {exc}") from exc
-    except OSError as exc:
+    except PermissionError as exc:
+        raise ConfigError(f"Permission denied accessing config file '{path}': {exc}") from exc
+    except Exception as exc:
         raise ConfigError(f"Failed to read config file '{path}': {exc}") from exc
 
     return validate_config(data)
@@ -187,13 +189,20 @@ def load_config_file(path: Path) -> GaugeConfigDict:
 
 def save_config_file(config: GaugeConfigDict, path: Path) -> None:
     """Atomically write configuration dictionary as formatted JSON to path."""
-    path.parent.mkdir(parents=True, exist_ok=True)
+    temp_name = None
     try:
+        path.parent.mkdir(parents=True, exist_ok=True)
         with tempfile.NamedTemporaryFile("w", dir=str(path.parent), delete=False, encoding="utf-8") as tf:
             json.dump(config, tf, indent=4)
             temp_name = tf.name
+
         os.replace(temp_name, str(path))
     except Exception as exc:
+        if temp_name is not None and os.path.exists(temp_name):
+            try:
+                os.remove(temp_name)
+            except OSError:
+                pass
         raise ConfigError(f"Failed to save configuration to '{path}': {exc}") from exc
 
 
