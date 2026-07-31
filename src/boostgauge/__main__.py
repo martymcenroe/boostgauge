@@ -17,9 +17,6 @@ def main(args: Optional[list[str]] = None) -> int:
     except ConfigError as err:
         print(f"Error: {err}", file=sys.stderr)
         return 1
-    except Exception as err:
-        print(f"Unexpected error initializing configuration: {err}", file=sys.stderr)
-        return 1
 
     app = BoostGaugeApp(config, config_path)
     return app.run()

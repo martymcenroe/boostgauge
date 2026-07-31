@@ -6,6 +6,7 @@ Option C compliant: No GUI/tkinter initialization.
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 import pytest
 
 from boostgauge.config import (
@@ -576,3 +577,44 @@ def test_load_effective_config_no_args_uses_default_path(monkeypatch, tmp_path):
     assert path == fake_path
     assert fake_path.exists()
     assert cfg == get_default_config()
+
+
+def test_load_config_file_raises_on_permission_error(tmp_path):
+    """load_config_file raises ConfigError with 'Permission denied' message on PermissionError."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text(json.dumps(get_default_config()), encoding="utf-8")
+
+    with patch("builtins.open", side_effect=PermissionError("access denied")):
+        with pytest.raises(ConfigError, match="Permission denied"):
+            load_config_file(config_file)
+
+
+def test_load_config_file_raises_on_generic_read_error(tmp_path):
+    """load_config_file raises ConfigError on unexpected read errors."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text(json.dumps(get_default_config()), encoding="utf-8")
+
+    with patch("builtins.open", side_effect=RuntimeError("unexpected io failure")):
+        with pytest.raises(ConfigError, match="Failed to read config file"):
+            load_config_file(config_file)
+
+
+def test_save_config_file_raises_config_error_on_replace_failure(tmp_path):
+    """save_config_file raises ConfigError when os.replace fails."""
+    config_file = tmp_path / "config.json"
+    cfg = get_default_config()
+
+    with patch("os.replace", side_effect=OSError("disk full")):
+        with pytest.raises(ConfigError, match="Failed to save configuration"):
+            save_config_file(cfg, config_file)
+
+
+def test_save_config_file_cleanup_handles_remove_error(tmp_path):
+    """save_config_file handles OSError during temp file cleanup after replace failure."""
+    config_file = tmp_path / "config.json"
+    cfg = get_default_config()
+
+    with patch("os.replace", side_effect=OSError("disk full")):
+        with patch("os.remove", side_effect=OSError("cannot remove")):
+            with pytest.raises(ConfigError, match="Failed to save configuration"):
+                save_config_file(cfg, config_file)

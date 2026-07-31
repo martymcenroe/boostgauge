@@ -23,7 +23,12 @@ class BoostGaugeApp:
         self._is_running = True
         return 0
 
-    def shutdown(self, current_x: Optional[int] = None, current_y: Optional[int] = None, current_size: Optional[int] = None) -> None:
+    def shutdown(
+        self,
+        current_x: Optional[int] = None,
+        current_y: Optional[int] = None,
+        current_size: Optional[int] = None,
+    ) -> None:
         """Persist final window position and size on application exit."""
         x = current_x if current_x is not None else self.config["position"]["x"]
         y = current_y if current_y is not None else self.config["position"]["y"]
