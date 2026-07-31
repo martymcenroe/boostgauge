@@ -5,7 +5,10 @@ Issue #41: Telltale peak-hold needle logic (pure, no GUI)
 
 from collections import deque
 from dataclasses import dataclass
-from typing import Optional
+from typing import Dict, Literal, Optional
+
+
+WindowKey = Literal["m1", "m10", "h1", "all"]
 
 
 @dataclass(frozen=True)
@@ -19,22 +22,22 @@ class Sample:
 class Telltale:
     """Tracks peak values over a sliding time window with optional linear decay."""
 
-    def __init__(self, window: float, decay_rate: Optional[float] = None) -> None:
+    def __init__(self, window: Optional[float], decay_rate: Optional[float] = None) -> None:
         """Initialize Telltale with window duration in seconds and optional decay_rate.
 
         Args:
-            window: Sliding time window duration in seconds (> 0).
+            window: Sliding time window duration in seconds (> 0), or None for all-time.
             decay_rate: Optional linear decay rate in units per second (>= 0).
 
         Raises:
             ValueError: If window <= 0 or decay_rate < 0.
         """
-        if window <= 0:
+        if window is not None and window <= 0:
             raise ValueError("Window must be positive")
         if decay_rate is not None and decay_rate < 0:
             raise ValueError("Decay rate must be non-negative")
 
-        self._window: float = float(window)
+        self._window: Optional[float] = float(window) if window is not None else None
         self._decay_rate: Optional[float] = (
             float(decay_rate) if decay_rate is not None else None
         )
@@ -66,7 +69,8 @@ class Telltale:
         self._max_deque.append(new_sample)
         self._samples.append(new_sample)
 
-        self._advance_to(ts)
+        if self._window is not None:
+            self._advance_to(ts)
 
     def current_peak(self, timestamp: Optional[float] = None) -> Optional[float]:
         """Return the highest value within the active window, considering decay.
@@ -87,14 +91,20 @@ class Telltale:
         if t_query < self._last_update_time:
             raise ValueError("Query timestamp cannot be behind latest sample update")
 
-        self._advance_to(t_query)
+        if self._window is not None:
+            self._advance_to(t_query)
 
         active_window_max: Optional[float] = (
             self._max_deque[0].value if self._max_deque else None
         )
 
         decayed_val: Optional[float] = None
-        if self._decay_peak is not None and self._decay_rate is not None and self._decay_rate > 0:
+        if (
+            self._window is not None
+            and self._decay_peak is not None
+            and self._decay_rate is not None
+            and self._decay_rate > 0
+        ):
             expired_time = t_query - (self._decay_peak.timestamp + self._window)
             if expired_time >= 0:
                 calc_decay = self._decay_peak.value - (self._decay_rate * expired_time)
@@ -109,6 +119,8 @@ class Telltale:
 
     def _advance_to(self, t_target: float) -> None:
         """Evict expired samples relative to t_target and update decay tracking."""
+        if self._window is None:
+            return
         cutoff = t_target - self._window
         while self._samples and self._samples[0].timestamp < cutoff:
             expired_sample = self._samples.popleft()
@@ -132,3 +144,47 @@ class Telltale:
         self._max_deque.clear()
         self._decay_peak = None
         self._last_update_time = None
+
+
+class TelltaleManager:
+    """Manages four sliding-window Telltale instances for system metric peaks.
+
+    Encapsulates 1m (60s), 10m (600s), 1h (3600s), and all-time (None) windows.
+    Closes #2
+    """
+
+    def __init__(self) -> None:
+        """Initialize four Telltale window objects."""
+        self._telltales: Dict[str, Telltale] = {
+            "m1": Telltale(window=60.0),
+            "m10": Telltale(window=600.0),
+            "h1": Telltale(window=3600.0),
+            "all": Telltale(window=None),
+        }
+
+    def update(self, timestamp: float, value: float) -> None:
+        """Pipe live metric sample (timestamp, value) to all four telltales."""
+        clamped_val = max(0.0, min(100.0, float(value)))
+        for telltale in self._telltales.values():
+            telltale.update(timestamp, clamped_val)
+
+    def get_peaks(self, timestamp: Optional[float] = None) -> Dict[str, Optional[float]]:
+        """Return current peak values dict for all four windows."""
+        return {
+            key: telltale.current_peak(timestamp)
+            for key, telltale in self._telltales.items()
+        }
+
+    def reset(self, key: str) -> None:
+        """Reset a specific window or all windows if key is 'all'."""
+        if key == "all":
+            self.reset_all()
+            return
+        if key not in self._telltales:
+            raise KeyError(f"Invalid telltale window key: '{key}'")
+        self._telltales[key].reset()
+
+    def reset_all(self) -> None:
+        """Reset all four Telltale instances simultaneously."""
+        for telltale in self._telltales.values():
+            telltale.reset()
