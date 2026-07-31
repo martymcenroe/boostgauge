@@ -56,7 +56,7 @@ def test_scenario_031_monotonic_timestamp_progression():
     tt = Telltale(window=10.0)
     tt.update(timestamp=1.0, value=10.0)
     tt.update(timestamp=2.0, value=20.0)
-    tt.update(timestamp=2.0, value=25.0)
+    tt.update(timestamp=2.0, value=25.0)  # Same timestamp allowed
     assert tt._last_update_time == 2.0
 
 
@@ -91,7 +91,7 @@ def test_scenario_042_rising_series_peak_equals_maximum():
     tt.update(timestamp=2.0, value=30.0)
     assert tt.current_peak() == 30.0
     tt.update(timestamp=3.0, value=20.0)
-    assert tt.current_peak() == 30.0
+    assert tt.current_peak() == 30.0  # Max remains 30.0
 
 
 def test_scenario_043_window_expiration_without_decay_drops_peak():
@@ -101,6 +101,7 @@ def test_scenario_043_window_expiration_without_decay_drops_peak():
     tt.update(timestamp=5.0, value=40.0)
     assert tt.current_peak(timestamp=5.0) == 100.0
 
+    # At t=10.1, sample at t=0.0 (value=100.0) is expired (cutoff=0.1)
     assert tt.current_peak(timestamp=10.1) == 40.0
 
 
@@ -134,6 +135,7 @@ def test_scenario_052_new_higher_sample_resets_decaying_peak():
     tt.update(timestamp=0.0, value=100.0)
     assert tt.current_peak(timestamp=12.0) == 70.0
 
+    # Ingest new spike of 120.0 at t=12.5
     tt.update(timestamp=12.5, value=120.0)
     assert tt.current_peak(timestamp=12.5) == 120.0
 
@@ -170,3 +172,24 @@ def test_query_behind_latest_update_raises_value_error():
     tt.update(timestamp=10.0, value=50.0)
     with pytest.raises(ValueError, match="Query timestamp cannot be behind latest sample update"):
         tt.current_peak(timestamp=9.0)
+
+
+def test_decay_peak_persists_after_active_window_empties():
+    """Decaying peak returned when all samples have expired from the active window."""
+    tt = Telltale(window=10.0, decay_rate=5.0)
+    tt.update(timestamp=0.0, value=100.0)
+    # At t=15.0, cutoff=5.0 so Sample(0,100) expires; no active samples remain.
+    # Decay = 100.0 - 5.0 * (15.0 - 10.0) = 75.0
+    assert tt.current_peak(timestamp=15.0) == 75.0
+
+
+def test_decay_peak_replaced_by_later_higher_value_expired_sample():
+    """Second expired sample with higher decayed value replaces first as decay peak."""
+    tt = Telltale(window=10.0, decay_rate=5.0)
+    tt.update(timestamp=0.0, value=80.0)
+    tt.update(timestamp=1.0, value=100.0)
+    # At t=15.0, cutoff=5.0; both samples expire.
+    # Sample(0,80): decay = 80 - 5*(15-10) = 55.0 -> initial decay_peak
+    # Sample(1,100): decay = 100 - 5*(15-11) = 80.0 -> replaces as better candidate
+    # No active samples; decayed_val = 80.0
+    assert tt.current_peak(timestamp=15.0) == 80.0

@@ -101,13 +101,10 @@ class Telltale:
                 if calc_decay > 0:
                     decayed_val = calc_decay
 
-        if active_window_max is None and decayed_val is None:
-            return None
         if active_window_max is None:
             return decayed_val
         if decayed_val is None:
             return active_window_max
-
         return max(active_window_max, decayed_val)
 
     def _advance_to(self, t_target: float) -> None:
@@ -122,19 +119,12 @@ class Telltale:
             if self._decay_rate is not None and self._decay_rate > 0:
                 exp_time = t_target - (expired_sample.timestamp + self._window)
                 exp_decayed = expired_sample.value - (self._decay_rate * exp_time)
-                if exp_decayed > 0:
-                    if self._decay_peak is None:
-                        self._decay_peak = expired_sample
-                    else:
-                        curr_exp_time = t_target - (self._decay_peak.timestamp + self._window)
-                        curr_decayed = self._decay_peak.value - (self._decay_rate * curr_exp_time)
-                        if exp_decayed >= curr_decayed:
-                            self._decay_peak = expired_sample
-
-        if self._decay_peak is not None and self._decay_rate is not None and self._decay_rate > 0:
-            curr_exp_time = t_target - (self._decay_peak.timestamp + self._window)
-            if self._decay_peak.value - (self._decay_rate * curr_exp_time) <= 0:
-                self._decay_peak = None
+                curr_decayed = (
+                    0.0 if self._decay_peak is None
+                    else self._decay_peak.value - self._decay_rate * (t_target - self._decay_peak.timestamp - self._window)
+                )
+                if exp_decayed > 0 and exp_decayed >= curr_decayed:
+                    self._decay_peak = expired_sample
 
     def reset(self) -> None:
         """Clear all sample history and reset internal peak state."""
