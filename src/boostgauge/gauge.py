@@ -4,6 +4,7 @@ Issue #1: Core gauge renderer — analog tachometer with arc, needle, and tick m
 """
 
 from typing import Any, Dict, Optional
+
 from PIL import Image
 
 from boostgauge.skins import get_skin
@@ -33,13 +34,13 @@ def render(
         PIL.Image.Image: Rendered RGBA image of size (size, size).
 
     Raises:
-        TypeError: If `value` is not an int or float.
+        TypeError: If `value` is not an int or float (bool is rejected).
         ValueError: If `size` < 128 or requested skin name is unregistered.
     """
-    if not isinstance(value, (int, float)) or isinstance(value, bool):
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
         raise TypeError(f"Value must be a numeric float or int, got {type(value).__name__}")
 
-    if not isinstance(size, int) or size < MIN_GAUGE_SIZE:
+    if isinstance(size, bool) or not isinstance(size, int) or size < MIN_GAUGE_SIZE:
         raise ValueError(f"Gauge size must be an integer >= {MIN_GAUGE_SIZE}, got {size}")
 
     clamped_value = max(0.0, min(100.0, float(value)))
