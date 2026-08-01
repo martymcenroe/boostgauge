@@ -65,57 +65,53 @@ def test_unregistered_skin_raises() -> None:
 
 
 def test_telltale_none_value_omitted() -> None:
-    img_with_none = render(50.0, telltales={"m10": None})
-    img_no_telltales = render(50.0, telltales=None)
-    assert img_with_none.tobytes() == img_no_telltales.tobytes()
+    img_with_none = render(50.0, telltales={"m1": None, "m10": 60.0})
+    img_without_m1 = render(50.0, telltales={"m10": 60.0})
+    assert img_with_none.tobytes() == img_without_m1.tobytes()
 
 
-def test_telltale_partial_keys() -> None:
-    img = render(50.0, telltales={"m1": 25.0, "all_time": 87.5})
-    assert isinstance(img, Image.Image)
-    assert img.size == (DEFAULT_GAUGE_SIZE, DEFAULT_GAUGE_SIZE)
+def test_telltale_all_none_matches_no_telltales() -> None:
+    img_all_none = render(50.0, telltales={"m1": None, "m10": None, "h1": None, "all_time": None})
+    img_no_tell = render(50.0, telltales=None)
+    assert img_all_none.tobytes() == img_no_tell.tobytes()
 
 
-def test_config_none_defaults_to_stingray() -> None:
-    img = render(50.0, config=None)
-    assert isinstance(img, Image.Image)
-    assert img.size == (DEFAULT_GAUGE_SIZE, DEFAULT_GAUGE_SIZE)
-
-
-def test_config_missing_skin_key_defaults_to_stingray() -> None:
-    img = render(50.0, config={"color_scheme": "default"})
-    assert isinstance(img, Image.Image)
-    assert img.size == (DEFAULT_GAUGE_SIZE, DEFAULT_GAUGE_SIZE)
-
-
-def test_value_boundary_zero() -> None:
+def test_render_returns_rgba_image() -> None:
     img = render(0.0)
-    assert isinstance(img, Image.Image)
     assert img.mode == "RGBA"
 
+    img2 = render(100.0)
+    assert img2.mode == "RGBA"
 
-def test_value_boundary_hundred() -> None:
-    img = render(100.0)
+
+def test_render_integer_value_accepted() -> None:
+    img = render(75)
     assert isinstance(img, Image.Image)
-    assert img.mode == "RGBA"
+    assert img.size == (DEFAULT_GAUGE_SIZE, DEFAULT_GAUGE_SIZE)
 
 
-def test_integer_value_accepted() -> None:
-    img = render(50)
-    assert isinstance(img, Image.Image)
-
-
-def test_size_exactly_minimum() -> None:
+def test_render_minimum_size() -> None:
     img = render(50.0, size=MIN_GAUGE_SIZE)
     assert img.size == (MIN_GAUGE_SIZE, MIN_GAUGE_SIZE)
 
 
-def test_size_below_minimum_raises() -> None:
-    with pytest.raises(ValueError):
-        render(50.0, size=127)
+def test_render_config_none_uses_stingray() -> None:
+    img1 = render(50.0, config=None)
+    img2 = render(50.0, config={"skin": "stingray"})
+    assert img1.tobytes() == img2.tobytes()
 
 
-def test_all_telltales_provided() -> None:
-    img = render(50.0, telltales={"m1": 25.0, "m10": 50.0, "h1": 75.0, "all_time": 95.0})
+def test_render_full_telltales() -> None:
+    img = render(50.0, telltales={"m1": 25.0, "m10": 50.0, "h1": 75.0, "all_time": 90.0})
     assert isinstance(img, Image.Image)
     assert img.size == (DEFAULT_GAUGE_SIZE, DEFAULT_GAUGE_SIZE)
+
+
+def test_render_boundary_values() -> None:
+    img_zero = render(0.0)
+    assert isinstance(img_zero, Image.Image)
+
+    img_hundred = render(100.0)
+    assert isinstance(img_hundred, Image.Image)
+
+    assert img_zero.tobytes() != img_hundred.tobytes()

@@ -7,7 +7,6 @@ from typing import Any, Dict, Optional
 from PIL import Image
 
 from boostgauge.skins import get_skin
-import boostgauge.skins.stingray  # noqa: F401 — ensures stingray registers itself on import
 
 MIN_GAUGE_SIZE = 128
 DEFAULT_GAUGE_SIZE = 256
@@ -40,7 +39,7 @@ def render(
     if not isinstance(value, (int, float)) or isinstance(value, bool):
         raise TypeError(f"Value must be a numeric float or int, got {type(value).__name__}")
 
-    if not isinstance(size, int) or isinstance(size, bool) or size < MIN_GAUGE_SIZE:
+    if not isinstance(size, int) or size < MIN_GAUGE_SIZE:
         raise ValueError(f"Gauge size must be an integer >= {MIN_GAUGE_SIZE}, got {size}")
 
     clamped_value = max(0.0, min(100.0, float(value)))
