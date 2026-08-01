@@ -4,7 +4,7 @@ Issue #1: Core gauge renderer — analog tachometer with arc, needle, and tick m
 """
 
 import math
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple, Union
 from PIL import Image, ImageDraw, ImageFont
 
 from boostgauge.skins import register_skin
@@ -17,7 +17,7 @@ TELLTALE_COLORS: Dict[str, Tuple[int, int, int, int]] = {
 }
 
 
-def _get_font(size: int) -> ImageFont.ImageFont | ImageFont.FreeTypeFont:
+def _get_font(size: int) -> Union[ImageFont.ImageFont, ImageFont.FreeTypeFont]:
     font_names = ["Eurostile", "DejaVuSans", "LiberationSans-Regular", "arial"]
     for font_name in font_names:
         try:
@@ -40,46 +40,44 @@ def render_stingray(
 ) -> Image.Image:
     """Stingray v1 analog tachometer renderer using 2x supersampled Pillow drawing."""
     dim = size * 2
-    cx, cy = dim / 2.0, dim / 2.0
+    cx = dim / 2.0
+    cy = dim / 2.0
 
     img = Image.new("RGBA", (dim, dim), (0, 0, 0, 0))
     draw = ImageDraw.Draw(img)
 
-    # Housing
     corner_rad = int(dim * 0.08)
+    border_width = max(1, int(dim * 0.015))
     draw.rounded_rectangle(
         [0, 0, dim - 1, dim - 1],
         radius=corner_rad,
         fill=(30, 34, 42, 255),
         outline=(58, 63, 77, 255),
-        width=int(dim * 0.015),
+        width=border_width,
     )
 
-    # Dial face
     r_face = dim * 0.44
+    face_border_width = max(1, int(dim * 0.01))
     draw.ellipse(
         [cx - r_face, cy - r_face, cx + r_face, cy + r_face],
         fill=(14, 16, 19, 255),
         outline=(35, 39, 48, 255),
-        width=int(dim * 0.01),
+        width=face_border_width,
     )
 
-    # Redline arc (values 60 to 100)
-    # Standard math angle for value 60: 225 - 162 = 63° (CCW from east)
-    # Pillow uses CW from east: standard 63° CCW = Pillow 360-63 = 297°
-    # Standard math angle for value 100: 225 - 270 = -45° (CCW from east)
-    # Pillow: -45° CCW = 45° CW from east
     r_arc = dim * 0.40
     arc_width = max(2, int(dim * 0.035))
+    # Pillow arc: 0=3 o'clock, clockwise.
+    # value=60 -> math angle 63° -> Pillow start = -63 mod 360 = 297
+    # value=100 -> math angle -45° -> Pillow end = 45 (or 405 to ensure clockwise sweep)
     draw.arc(
         [cx - r_arc, cy - r_arc, cx + r_arc, cy + r_arc],
         start=297,
-        end=405,
+        end=45,
         fill=(230, 57, 70, 255),
         width=arc_width,
     )
 
-    # Fonts
     font_numeral = _get_font(int(dim * 0.045))
     font_wordmark = _get_font(int(dim * 0.030))
 
@@ -88,9 +86,8 @@ def render_stingray(
     r_tick_minor_inner = dim * 0.37
     r_numeral = dim * 0.27
 
-    # Major ticks and numerals
     for i in range(11):
-        v = i * 10.0
+        v = float(i * 10)
         angle_deg = _val_to_angle(v)
         angle_rad = math.radians(angle_deg)
         cos_a = math.cos(angle_rad)
@@ -110,7 +107,6 @@ def render_stingray(
         th = bbox[3] - bbox[1]
         draw.text((nx - tw / 2.0, ny - th / 2.0), num_str, fill=(240, 242, 245, 255), font=font_numeral)
 
-        # Minor ticks (4 per interval)
         if i < 10:
             for m in range(1, 5):
                 sub_v = v + m * 2.0
@@ -121,21 +117,28 @@ def render_stingray(
                 my1 = cy + r_tick_minor_inner * s_sin
                 mx2 = cx + r_tick_outer * s_cos
                 my2 = cy + r_tick_outer * s_sin
-                draw.line([(mx1, my1), (mx2, my2)], fill=(160, 165, 181, 255), width=max(1, int(dim * 0.006)))
+                draw.line(
+                    [(mx1, my1), (mx2, my2)],
+                    fill=(160, 165, 181, 255),
+                    width=max(1, int(dim * 0.006)),
+                )
 
-    # Wordmark
     wordmark = "BOOSTGAUGE"
     w_bbox = draw.textbbox((0, 0), wordmark, font=font_wordmark)
     ww = w_bbox[2] - w_bbox[0]
     wh = w_bbox[3] - w_bbox[1]
-    draw.text((cx - ww / 2.0, cy + dim * 0.18 - wh / 2.0), wordmark, fill=(138, 145, 160, 255), font=font_wordmark)
+    draw.text(
+        (cx - ww / 2.0, cy + dim * 0.18 - wh / 2.0),
+        wordmark,
+        fill=(138, 145, 160, 255),
+        font=font_wordmark,
+    )
 
-    # Telltale needles
     if telltales:
         for key in ["m1", "m10", "h1", "all_time"]:
             peak_val = telltales.get(key)
             if peak_val is not None:
-                t_angle = math.radians(_val_to_angle(peak_val))
+                t_angle = math.radians(_val_to_angle(float(peak_val)))
                 t_cos = math.cos(t_angle)
                 t_sin = -math.sin(t_angle)
                 r_tell = dim * 0.36
@@ -144,7 +147,6 @@ def render_stingray(
                 color = TELLTALE_COLORS.get(key, (255, 255, 255, 180))
                 draw.line([(cx, cy), (tx, ty)], fill=color, width=max(2, int(dim * 0.01)))
 
-    # Main needle
     main_angle_rad = math.radians(_val_to_angle(value))
     main_cos = math.cos(main_angle_rad)
     main_sin = -math.sin(main_angle_rad)
@@ -164,11 +166,16 @@ def render_stingray(
 
     draw.polygon([(b1_x, b1_y), (tip_x, tip_y), (b2_x, b2_y)], fill=(255, 0, 51, 255))
 
-    # Pivot cap
     r_cap_outer = dim * 0.06
     r_cap_inner = dim * 0.045
-    draw.ellipse([cx - r_cap_outer, cy - r_cap_outer, cx + r_cap_outer, cy + r_cap_outer], fill=(74, 80, 97, 255))
-    draw.ellipse([cx - r_cap_inner, cy - r_cap_inner, cx + r_cap_inner, cy + r_cap_inner], fill=(18, 20, 24, 255))
+    draw.ellipse(
+        [cx - r_cap_outer, cy - r_cap_outer, cx + r_cap_outer, cy + r_cap_outer],
+        fill=(74, 80, 97, 255),
+    )
+    draw.ellipse(
+        [cx - r_cap_inner, cy - r_cap_inner, cx + r_cap_inner, cy + r_cap_inner],
+        fill=(18, 20, 24, 255),
+    )
 
     return img.resize((size, size), resample=Image.Resampling.LANCZOS)
 

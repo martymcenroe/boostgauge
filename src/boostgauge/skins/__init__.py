@@ -35,3 +35,5 @@ def get_skin(name: str = "stingray") -> GaugeSkin:
         available = sorted(list(SKIN_REGISTRY.keys()))
         raise ValueError(f"Unknown skin: '{name}'. Available skins: {available}")
     return SKIN_REGISTRY[name]
+
+from . import stingray  # noqa: F401
