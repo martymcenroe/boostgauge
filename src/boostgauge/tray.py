@@ -32,7 +32,7 @@ class TrayController:
     def create_status_icon_image(
         self, color_name: str = "green", size: int = 64
     ) -> Image.Image:
-        """Create a PIL Image with a centered status circle dot (green/yellow/red)."""
+        """Create a PIL Image with a status dot indicator."""
         rgba = STATUS_COLORS.get(color_name.lower(), STATUS_COLORS["green"])
         img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
         draw = ImageDraw.Draw(img)
@@ -70,6 +70,7 @@ class TrayController:
         self.icon = pystray.Icon(
             "boostgauge", icon_img, "BoostGauge Monitor", menu=menu
         )
+
         self.thread = threading.Thread(target=self.icon.run, daemon=True)
         self.thread.start()
         logger.info("TrayController started background icon thread.")

@@ -5,10 +5,9 @@ Issue #5: Feature: always-on-top window with drag, minimize, and transparency
 
 import logging
 import queue
-import sys
 from typing import Any, Dict, Optional
 
-from boostgauge.config import WindowConfig, load_effective_config
+from boostgauge.config import WindowConfig
 from boostgauge.tray import TrayController
 from boostgauge.window import BoostGaugeWindow, WindowStateController
 
@@ -43,14 +42,11 @@ class BoostGaugeApp:
             self.root.after(50, self._schedule_queue_polling)
 
     def poll_event_queue(self) -> None:
-        """Poll and execute all pending events from the system tray thread."""
+        """Poll and execute events posted from system tray thread."""
         try:
             while True:
                 event = self.event_queue.get_nowait()
-                try:
-                    self._handle_tray_event(event)
-                except Exception as e:
-                    logger.error(f"Error handling tray event {event}: {e}")
+                self._handle_tray_event(event)
         except queue.Empty:
             pass
 
