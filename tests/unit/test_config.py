@@ -52,13 +52,13 @@ def test_t020_cli_arguments_overriding_file_settings(tmp_path: Path):
 def test_t030_geometry_preservation_across_exit_and_launch(tmp_path: Path):
     """T030: Verify window position and size geometry are persisted and restored correctly."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
 
     new_pos = WindowPosition(x=250, y=320)
     new_size = 400
     manager.save_geometry(new_pos, new_size)
 
-    reloaded_manager = ConfigManager(config_path=config_file)
+    reloaded_manager = ConfigManager(config_path=config_file, cli_args=[])
     assert reloaded_manager.config.position.x == 250
     assert reloaded_manager.config.position.y == 320
     assert reloaded_manager.config.size == 400
@@ -67,7 +67,7 @@ def test_t030_geometry_preservation_across_exit_and_launch(tmp_path: Path):
 def test_t040_dynamic_threshold_update_notifications(tmp_path: Path):
     """T040: Verify registered observers receive dynamic threshold update notifications."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
 
     notifications = []
 
@@ -258,7 +258,7 @@ def test_config_manager_uses_default_path_when_none(tmp_path: Path, monkeypatch)
     expected_path = tmp_path / "config.json"
     monkeypatch.setattr("boostgauge.config.get_default_config_path", lambda: expected_path)
 
-    manager = ConfigManager()
+    manager = ConfigManager(cli_args=[])
     assert manager.config_path == expected_path
 
 
@@ -277,7 +277,7 @@ def test_config_manager_cli_config_overrides_path(tmp_path: Path):
 def test_config_manager_multiple_observers(tmp_path: Path):
     """Verify all registered observers are called on threshold update."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
 
     results_a = []
     results_b = []
@@ -294,7 +294,7 @@ def test_config_manager_multiple_observers(tmp_path: Path):
 def test_config_manager_update_thresholds_invalid_does_not_call_observers(tmp_path: Path):
     """Verify observers are not called when threshold update has invalid values."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
 
     called = []
     manager.register_threshold_observer(lambda t: called.append(True))
@@ -308,7 +308,7 @@ def test_config_manager_update_thresholds_invalid_does_not_call_observers(tmp_pa
 def test_config_manager_update_thresholds_persists_to_disk(tmp_path: Path):
     """Verify update_thresholds writes updated thresholds to disk."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
     manager.update_thresholds({"process_count": {"yellow": 150.0, "red": 350.0}})
 
     on_disk = json.loads(config_file.read_text(encoding="utf-8"))
@@ -319,7 +319,7 @@ def test_config_manager_update_thresholds_persists_to_disk(tmp_path: Path):
 def test_config_manager_save_geometry_persists(tmp_path: Path):
     """Verify save_geometry updates config and writes to disk."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
     manager.save_geometry(WindowPosition(x=800, y=600), 450)
 
     on_disk = json.loads(config_file.read_text(encoding="utf-8"))
@@ -333,7 +333,7 @@ def test_config_manager_save_geometry_persists(tmp_path: Path):
 def test_config_manager_save_geometry_invalid_size(tmp_path: Path):
     """Verify save_geometry raises ValueError for non-positive size."""
     config_file = tmp_path / "config.json"
-    manager = ConfigManager(config_path=config_file)
+    manager = ConfigManager(config_path=config_file, cli_args=[])
 
     with pytest.raises(ValueError, match="size must be positive integer"):
         manager.save_geometry(WindowPosition(), 0)

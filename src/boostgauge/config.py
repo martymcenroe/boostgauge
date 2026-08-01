@@ -55,7 +55,7 @@ class AppConfig:
 
 
 def get_default_config_path() -> Path:
-    """Return platform-specific default configuration path (%APPDATA%/boostgauge/config.json or ~/.boostgauge/config.json)."""
+    """Return platform-specific default configuration path."""
     if sys.platform == "win32":
         app_data = os.environ.get("APPDATA")
         if app_data:
@@ -68,7 +68,7 @@ def get_default_config_path() -> Path:
 
 
 def load_config_file(config_path: Path) -> Dict[str, Any]:
-    """Load JSON config dictionary from disk; auto-creates directory and default file if missing."""
+    """Load JSON config dict from disk; auto-creates default file if missing."""
     if not config_path.exists():
         default_config = AppConfig()
         save_config_file(default_config, config_path)
@@ -85,7 +85,7 @@ def load_config_file(config_path: Path) -> Dict[str, Any]:
 
 
 def save_config_file(config: AppConfig, config_path: Path) -> None:
-    """Atomically save AppConfig instance as formatted JSON to disk using a temporary file."""
+    """Atomically save AppConfig instance as formatted JSON to disk."""
     config_path = Path(config_path).resolve()
     config_path.parent.mkdir(parents=True, exist_ok=True)
     temp_path = config_path.with_suffix(".tmp")
@@ -214,7 +214,8 @@ class ConfigManager:
         config_path: Optional[Path] = None,
         cli_args: Optional[List[str]] = None
     ) -> None:
-        parsed_cli = parse_cli_args(cli_args)
+        parsed_cli = parse_cli_args(cli_args if cli_args is not None else [])
+
         if parsed_cli.config is not None:
             self.config_path = Path(parsed_cli.config)
         elif config_path is not None:
