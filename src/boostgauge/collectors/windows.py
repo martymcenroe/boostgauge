@@ -30,8 +30,11 @@ class WindowsCollector(DataCollector):
         count = 0
         for proc in psutil.process_iter(attrs=["name"]):
             try:
-                name = (proc.info.get("name") or "").lower()
-                if name in ("conhost.exe", "openconsole.exe"):
+                info = proc.info
+                name = info.get("name")
+                if name is None:
+                    continue
+                if name.lower() in ("conhost.exe", "openconsole.exe"):
                     count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
                 continue
@@ -42,7 +45,8 @@ class WindowsCollector(DataCollector):
         total_handles = 0
         for proc in psutil.process_iter(attrs=["num_handles"]):
             try:
-                num_handles = proc.info.get("num_handles")
+                info = proc.info
+                num_handles = info.get("num_handles")
                 if num_handles is not None:
                     total_handles += num_handles
             except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
@@ -54,8 +58,11 @@ class WindowsCollector(DataCollector):
         unleashed_count = 0
         for proc in psutil.process_iter(attrs=["name"]):
             try:
-                name = (proc.info.get("name") or "").lower()
-                if name in ("python.exe", "pythonw.exe"):
+                info = proc.info
+                name = info.get("name")
+                if name is None:
+                    continue
+                if name.lower() in ("python.exe", "pythonw.exe"):
                     cmdline = proc.cmdline()
                     for arg in cmdline:
                         if "unleashed-c-" in arg and arg.endswith(".py"):

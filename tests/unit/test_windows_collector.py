@@ -53,8 +53,7 @@ def test_get_conpty_count_case_insensitive():
 def test_get_conpty_count_skips_access_denied():
     proc_ok = _make_proc("conhost.exe")
     proc_denied = MagicMock()
-    proc_denied.info = {}
-    proc_denied.info.get = MagicMock(side_effect=psutil.AccessDenied(pid=99))
+    proc_denied.info.get.side_effect = psutil.AccessDenied(pid=99)
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_denied]):
         collector = WindowsCollector()
@@ -64,8 +63,7 @@ def test_get_conpty_count_skips_access_denied():
 def test_get_conpty_count_skips_no_such_process():
     proc_ok = _make_proc("conhost.exe")
     proc_gone = MagicMock()
-    proc_gone.info = {}
-    proc_gone.info.get = MagicMock(side_effect=psutil.NoSuchProcess(pid=100))
+    proc_gone.info.get.side_effect = psutil.NoSuchProcess(pid=100)
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_gone]):
         collector = WindowsCollector()
@@ -75,8 +73,7 @@ def test_get_conpty_count_skips_no_such_process():
 def test_get_conpty_count_skips_permission_error():
     proc_ok = _make_proc("openconsole.exe")
     proc_perm = MagicMock()
-    proc_perm.info = {}
-    proc_perm.info.get = MagicMock(side_effect=PermissionError("access denied"))
+    proc_perm.info.get.side_effect = PermissionError("access denied")
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_perm]):
         collector = WindowsCollector()
@@ -107,8 +104,7 @@ def test_get_handle_count_skips_none_handles():
 def test_get_handle_count_skips_access_denied():
     proc_ok = _make_proc("svchost.exe", num_handles=1500)
     proc_denied = MagicMock()
-    proc_denied.info = {}
-    proc_denied.info.get = MagicMock(side_effect=psutil.AccessDenied(pid=123))
+    proc_denied.info.get.side_effect = psutil.AccessDenied(pid=123)
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_denied]):
         collector = WindowsCollector()
@@ -118,8 +114,7 @@ def test_get_handle_count_skips_access_denied():
 def test_get_handle_count_skips_no_such_process():
     proc_ok = _make_proc("svchost.exe", num_handles=800)
     proc_gone = MagicMock()
-    proc_gone.info = {}
-    proc_gone.info.get = MagicMock(side_effect=psutil.NoSuchProcess(pid=200))
+    proc_gone.info.get.side_effect = psutil.NoSuchProcess(pid=200)
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_gone]):
         collector = WindowsCollector()
@@ -129,8 +124,7 @@ def test_get_handle_count_skips_no_such_process():
 def test_get_handle_count_skips_permission_error():
     proc_ok = _make_proc("svchost.exe", num_handles=600)
     proc_perm = MagicMock()
-    proc_perm.info = {}
-    proc_perm.info.get = MagicMock(side_effect=PermissionError("denied"))
+    proc_perm.info.get.side_effect = PermissionError("denied")
 
     with patch("psutil.process_iter", return_value=[proc_ok, proc_perm]):
         collector = WindowsCollector()
@@ -275,16 +269,13 @@ def test_collect_with_conpty_processes():
 
 def test_collect_resilient_to_all_error_types():
     proc_access = MagicMock()
-    proc_access.info = {}
-    proc_access.info.get = MagicMock(side_effect=psutil.AccessDenied(pid=1))
+    proc_access.info.get.side_effect = psutil.AccessDenied(pid=1)
 
     proc_gone = MagicMock()
-    proc_gone.info = {}
-    proc_gone.info.get = MagicMock(side_effect=psutil.NoSuchProcess(pid=2))
+    proc_gone.info.get.side_effect = psutil.NoSuchProcess(pid=2)
 
     proc_perm = MagicMock()
-    proc_perm.info = {}
-    proc_perm.info.get = MagicMock(side_effect=PermissionError("denied"))
+    proc_perm.info.get.side_effect = PermissionError("denied")
 
     with patch("psutil.process_iter", return_value=[proc_access, proc_gone, proc_perm]), \
          patch("psutil.pids", return_value=[]), \
