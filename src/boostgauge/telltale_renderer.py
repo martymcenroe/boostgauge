@@ -8,9 +8,33 @@ from __future__ import annotations
 from dataclasses import dataclass
 import math
 from typing import Dict, List, Optional, Tuple, TypedDict
+
 from PIL import Image, ImageDraw
 
-from boostgauge.telltale import Telltale
+
+class _Telltale:
+    """Peak-hold tracker over an optional sliding time window."""
+
+    def __init__(self, window: Optional[float] = None) -> None:
+        self._window = window
+        self._samples: List[Tuple[float, float]] = []
+
+    def update(self, timestamp: float, value: float) -> None:
+        self._samples.append((timestamp, value))
+
+    def current_peak(self, timestamp: Optional[float] = None) -> Optional[float]:
+        if not self._samples:
+            return None
+        if self._window is None or timestamp is None:
+            return max(v for _, v in self._samples)
+        cutoff = timestamp - self._window
+        relevant = [v for t, v in self._samples if t >= cutoff]
+        if not relevant:
+            return None
+        return max(relevant)
+
+    def reset(self) -> None:
+        self._samples.clear()
 
 
 @dataclass(frozen=True)
@@ -71,7 +95,7 @@ DEFAULT_TELLTALE_STYLES: Dict[str, TelltaleStyle] = {
 
 
 class TelltaleManager:
-    """Manages four Telltale algorithm instances for peak tracking windows."""
+    """Manages Telltale instances for peak tracking across configurable time windows."""
 
     def __init__(
         self,
@@ -88,11 +112,13 @@ class TelltaleManager:
         else:
             self._window_configs = dict(custom_windows)
 
-        self.telltales: Dict[str, Telltale] = {}
+        self.telltales: Dict[str, _Telltale] = {}
         for name, window_sec in self._window_configs.items():
             if window_sec is not None and window_sec <= 0:
-                raise ValueError(f"Window seconds must be positive or None, got {window_sec}")
-            self.telltales[name] = Telltale(window=window_sec)
+                raise ValueError(
+                    f"Window seconds must be positive or None, got {window_sec}"
+                )
+            self.telltales[name] = _Telltale(window=window_sec)
 
     def update(self, timestamp: float, value: float) -> None:
         """Forward sample (timestamp, value) to all managed telltale instances."""
@@ -147,7 +173,6 @@ class TelltaleRenderer:
             fraction = 0.0
         else:
             fraction = (clamped_val - self.min_val) / val_range
-
         angle_deg = self.min_angle_deg + fraction * (self.max_angle_deg - self.min_angle_deg)
         return math.radians(angle_deg)
 
