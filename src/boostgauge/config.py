@@ -92,9 +92,18 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "show_session_count": True,
 }
 
+_WINDOW_CONFIG_DEFAULTS: WindowConfigDict = {
+    "x": 100,
+    "y": 100,
+    "size": 256,
+    "topmost": True,
+    "opacity": 1.0,
+    "compact_mode": False,
+}
+
 
 def get_default_config_path() -> Path:
-    """Return platform-dependent default configuration path (~/.boostgauge/config.json or %APPDATA%/boostgauge/config.json)."""
+    """Return platform-dependent default configuration path."""
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         if appdata:
@@ -177,7 +186,13 @@ def validate_config(config: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError(f"always_on_top must be a boolean, got {always_on_top}")
 
     pos = config.get("position")
-    if not isinstance(pos, dict) or "x" not in pos or "y" not in pos or not isinstance(pos["x"], int) or not isinstance(pos["y"], int):
+    if (
+        not isinstance(pos, dict)
+        or "x" not in pos
+        or "y" not in pos
+        or not isinstance(pos["x"], int)
+        or not isinstance(pos["y"], int)
+    ):
         raise ValueError(f"position must be a dict with integer 'x' and 'y' keys, got {pos}")
 
     thresholds = config.get("thresholds")
@@ -195,7 +210,9 @@ def validate_config(config: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(y, (int, float)) or not isinstance(r, (int, float)):
             raise ValueError(f"threshold values for '{metric}' must be numbers")
         if y < 0 or r < y:
-            raise ValueError(f"threshold values for '{metric}' must satisfy 0 <= yellow <= red, got yellow={y}, red={r}")
+            raise ValueError(
+                f"threshold values for '{metric}' must satisfy 0 <= yellow <= red, got yellow={y}, red={r}"
+            )
 
     telltale = config.get("telltale_windows")
     if not isinstance(telltale, dict):
@@ -282,19 +299,22 @@ class WindowConfig:
         self.config_path = config_path or get_default_config_path()
 
     def load(self) -> WindowConfigDict:
+        resolved_path = Path(self.config_path).expanduser().resolve()
+        if not resolved_path.exists():
+            return cast(WindowConfigDict, copy.copy(_WINDOW_CONFIG_DEFAULTS))
         try:
-            data = load_config_file(self.config_path)
+            data = load_config_file(resolved_path)
         except ValueError:
-            data = get_default_config()
+            return cast(WindowConfigDict, copy.copy(_WINDOW_CONFIG_DEFAULTS))
         pos = data.get("position", data.get("window_position", {"x": 100, "y": 100}))
-        return {
+        return cast(WindowConfigDict, {
             "x": int(pos.get("x", 100)),
             "y": int(pos.get("y", 100)),
             "size": int(data.get("size", 256)),
             "topmost": bool(data.get("always_on_top", True)),
             "opacity": float(data.get("opacity", 1.0)),
             "compact_mode": bool(data.get("compact_mode", False)),
-        }
+        })
 
     def save(self, config: WindowConfigDict) -> None:
         try:

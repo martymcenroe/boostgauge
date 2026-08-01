@@ -19,7 +19,9 @@ def test_t060_chroma_key_circular_mask_rendering():
     assert gauge_img.size == size
 
     corner_pixel = gauge_img.getpixel((5, 5))
-    assert corner_pixel[3] == 0 or corner_pixel[:3] == (0, 0, 1)
+    is_transparent = len(corner_pixel) > 3 and corner_pixel[3] == 0
+    is_chroma = corner_pixel[:3] == (0, 0, 1)
+    assert is_transparent or is_chroma
 
 
 def test_t060_dial_image_mode():
@@ -39,6 +41,9 @@ def test_t060_corner_pixels_outside_radius():
             is_transparent = pixel[3] == 0
             is_chroma = pixel[:3] == (0, 0, 1)
             assert is_transparent or is_chroma, f"Corner {(cx, cy)} pixel {pixel} is not transparent or chroma"
+        else:
+            is_chroma = pixel[:3] == (0, 0, 1)
+            assert is_chroma, f"Corner {(cx, cy)} pixel {pixel} is not chroma key"
 
 
 def test_t060_dial_renders_at_various_values():
@@ -126,13 +131,12 @@ def test_radial_distance_outside_circle_is_chroma_or_transparent():
         dist = math.sqrt((px - center_x) ** 2 + (py - center_y) ** 2)
         if dist > radius - 2:
             pixel = gauge_img.getpixel((px, py))
-            if len(pixel) == 4:
-                is_transparent = pixel[3] == 0
-                is_chroma = pixel[:3] == (0, 0, 1)
-                assert is_transparent or is_chroma, (
-                    f"Pixel at ({px}, {py}) dist={dist:.1f} pixel={pixel} "
-                    "is not transparent or chroma"
-                )
+            is_transparent = len(pixel) > 3 and pixel[3] == 0
+            is_chroma = pixel[:3] == (0, 0, 1)
+            assert is_transparent or is_chroma, (
+                f"Pixel at ({px}, {py}) dist={dist:.1f} pixel={pixel} "
+                "is not transparent or chroma"
+            )
 
 
 def test_status_dot_visual_green():

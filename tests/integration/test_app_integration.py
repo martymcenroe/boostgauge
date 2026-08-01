@@ -12,6 +12,17 @@ from boostgauge.app import BoostGaugeApp
 from boostgauge.config import WindowConfig, WindowConfigDict, VirtualScreenBounds
 
 
+@pytest.fixture(autouse=True)
+def isolated_config(tmp_path, monkeypatch):
+    """Redirect default config path to tmp_path for each test to prevent cross-test state pollution."""
+    config_path = tmp_path / "boostgauge_isolated" / "config.json"
+    monkeypatch.setattr(
+        "boostgauge.config.get_default_config_path",
+        lambda: config_path,
+    )
+    yield config_path
+
+
 def test_t100_app_tray_event_queue_processing(tmp_path):
     """T100: App polls tray event queue and updates state machine correctly."""
     app = BoostGaugeApp(root=None)

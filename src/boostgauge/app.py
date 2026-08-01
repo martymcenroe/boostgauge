@@ -43,11 +43,14 @@ class BoostGaugeApp:
             self.root.after(50, self._schedule_queue_polling)
 
     def poll_event_queue(self) -> None:
-        """Poll and execute events posted from system tray thread."""
+        """Poll and execute all pending events from the system tray thread."""
         try:
             while True:
                 event = self.event_queue.get_nowait()
-                self._handle_tray_event(event)
+                try:
+                    self._handle_tray_event(event)
+                except Exception as e:
+                    logger.error(f"Error handling tray event {event}: {e}")
         except queue.Empty:
             pass
 
