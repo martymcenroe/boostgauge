@@ -3,6 +3,8 @@
 Issue #4: Feature: Windows data collector — ConPTY, processes, memory, handles
 """
 
+import queue
+import time
 from unittest.mock import MagicMock, patch
 import pytest
 import psutil
@@ -22,6 +24,19 @@ def _make_proc(name, num_handles=None, cmdline=None):
     else:
         proc.cmdline.return_value = []
     return proc
+
+
+def _make_snap(composite_value=0.0, timestamp=1.0):
+    return SystemSnapshot(
+        timestamp=timestamp,
+        conpty_count=0,
+        process_count=0,
+        memory_percent=0.0,
+        handle_count=0,
+        unleashed_sessions=0,
+        driver="conpty",
+        composite_value=composite_value,
+    )
 
 
 def test_get_conpty_count_conhost_and_openconsole():
@@ -312,3 +327,43 @@ def test_windows_collector_custom_config():
     assert collector.thresholds["memory"] == 85.0
     assert collector.thresholds["process"] == 400.0
     assert collector.thresholds["handles"] == 80000.0
+
+
+def test_put_handles_queue_empty_race():
+    sq = queue.Queue(maxsize=1)
+    collector = WindowsCollector(snapshot_queue=sq)
+    snap = _make_snap()
+
+    put_calls = [0]
+
+    def mock_put(item, block=True, timeout=None):
+        put_calls[0] += 1
+        if put_calls[0] == 1:
+            raise queue.Full
+
+    with patch.object(sq, "put", mock_put), \
+         patch.object(sq, "get", side_effect=queue.Empty):
+        collector.put(snap)  # must not raise
+
+
+def test_put_handles_still_full_after_eviction():
+    sq = queue.Queue(maxsize=1)
+    collector = WindowsCollector(snapshot_queue=sq)
+    snap = _make_snap()
+
+    with patch.object(sq, "put", side_effect=queue.Full):
+        collector.put(snap)  # must not raise
+
+
+def test_poll_loop_continues_after_collect_exception():
+    with patch("psutil.process_iter", return_value=[]), \
+         patch("psutil.pids", return_value=[]), \
+         patch("psutil.virtual_memory") as mock_mem:
+        mock_mem.return_value.percent = 0.0
+        collector = WindowsCollector(config={"poll_interval": 0.05})
+
+        with patch.object(collector, "collect", side_effect=RuntimeError("simulated poll error")):
+            collector.start()
+            time.sleep(0.15)
+            collector.stop()
+            assert not collector.is_running

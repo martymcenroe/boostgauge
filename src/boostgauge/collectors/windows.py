@@ -4,9 +4,9 @@ Issue #4: Feature: Windows data collector — ConPTY, processes, memory, handles
 """
 
 import logging
+import queue
 import time
 from typing import Any, Dict, Optional
-import queue
 
 import psutil
 
@@ -26,27 +26,23 @@ class WindowsCollector(DataCollector):
         super().__init__(config=config, snapshot_queue=snapshot_queue)
 
     def _get_conpty_count(self) -> int:
-        """Count conhost.exe instances and OpenConsole process allocations."""
+        """Count conhost.exe and OpenConsole.exe process allocations."""
         count = 0
         for proc in psutil.process_iter(attrs=["name"]):
             try:
-                info = proc.info
-                name = info.get("name")
-                if name is None:
-                    continue
-                if name.lower() in ("conhost.exe", "openconsole.exe"):
+                name = (proc.info.get("name") or "").lower()
+                if name in ("conhost.exe", "openconsole.exe"):
                     count += 1
             except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
                 continue
         return count
 
     def _get_handle_count(self) -> int:
-        """Retrieve aggregate total process handles across system processes."""
+        """Aggregate total handle count across all accessible system processes."""
         total_handles = 0
         for proc in psutil.process_iter(attrs=["num_handles"]):
             try:
-                info = proc.info
-                num_handles = info.get("num_handles")
+                num_handles = proc.info.get("num_handles")
                 if num_handles is not None:
                     total_handles += num_handles
             except (psutil.NoSuchProcess, psutil.AccessDenied, PermissionError):
@@ -54,15 +50,12 @@ class WindowsCollector(DataCollector):
         return total_handles
 
     def _get_unleashed_sessions(self) -> int:
-        """Detect Unleashed sessions by inspecting python process command lines."""
+        """Count active Unleashed sessions by inspecting Python process command lines."""
         unleashed_count = 0
         for proc in psutil.process_iter(attrs=["name"]):
             try:
-                info = proc.info
-                name = info.get("name")
-                if name is None:
-                    continue
-                if name.lower() in ("python.exe", "pythonw.exe"):
+                name = (proc.info.get("name") or "").lower()
+                if name in ("python.exe", "pythonw.exe"):
                     cmdline = proc.cmdline()
                     for arg in cmdline:
                         if "unleashed-c-" in arg and arg.endswith(".py"):
@@ -75,8 +68,7 @@ class WindowsCollector(DataCollector):
     def collect(self) -> SystemSnapshot:
         """Collect Windows system metrics and calculate composite snapshot load."""
         conpty_cnt = self._get_conpty_count()
-        pids = psutil.pids()
-        proc_cnt = len(pids)
+        proc_cnt = len(psutil.pids())
         mem_pct = psutil.virtual_memory().percent
         handle_cnt = self._get_handle_count()
         unleashed_cnt = self._get_unleashed_sessions()

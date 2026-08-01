@@ -208,3 +208,64 @@ def test_snapshot_field_types_from_collect():
     assert snapshot.handle_count >= 0
     assert snapshot.unleashed_sessions >= 0
     assert snapshot.timestamp > 0.0
+
+
+def test_collector_put_handles_queue_empty_race():
+    """Covers except queue.Empty branch: queue empties between Full check and get()."""
+    sq = queue.Queue(maxsize=1)
+    collector = WindowsCollector(snapshot_queue=sq)
+    snapshot = SystemSnapshot(
+        timestamp=time.time(),
+        conpty_count=0,
+        process_count=100,
+        memory_percent=50.0,
+        handle_count=10000,
+        unleashed_sessions=0,
+        driver="memory",
+        composite_value=50.0,
+    )
+
+    put_calls = [0]
+
+    def mock_put(item, block=True, timeout=None):
+        put_calls[0] += 1
+        if put_calls[0] == 1:
+            raise queue.Full
+
+    with patch.object(sq, "put", mock_put), \
+         patch.object(sq, "get", side_effect=queue.Empty):
+        collector.put(snapshot)
+
+
+def test_collector_put_handles_still_full_after_eviction():
+    """Covers inner except queue.Full branch: queue remains full after eviction attempt."""
+    sq = queue.Queue(maxsize=1)
+    collector = WindowsCollector(snapshot_queue=sq)
+    snapshot = SystemSnapshot(
+        timestamp=time.time(),
+        conpty_count=0,
+        process_count=100,
+        memory_percent=50.0,
+        handle_count=10000,
+        unleashed_sessions=0,
+        driver="memory",
+        composite_value=50.0,
+    )
+
+    with patch.object(sq, "put", side_effect=queue.Full):
+        collector.put(snapshot)
+
+
+def test_poll_loop_continues_after_collect_exception():
+    """Covers except Exception branch in _poll_loop when collect() raises."""
+    with patch("psutil.process_iter", return_value=[]), \
+         patch("psutil.pids", return_value=[]), \
+         patch("psutil.virtual_memory") as mock_mem:
+        mock_mem.return_value.percent = 0.0
+        collector = WindowsCollector(config={"poll_interval": 0.05})
+
+        with patch.object(collector, "collect", side_effect=RuntimeError("simulated poll error")):
+            collector.start()
+            time.sleep(0.15)
+            collector.stop()
+            assert not collector.is_running

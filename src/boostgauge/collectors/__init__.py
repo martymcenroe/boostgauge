@@ -19,7 +19,6 @@ def create_collector(
     if sys.platform == "win32":
         return WindowsCollector(config=config, snapshot_queue=snapshot_queue)
     else:
-        # Fallback for non-Windows platforms (e.g. testing environments)
         return WindowsCollector(config=config, snapshot_queue=snapshot_queue)
 
 

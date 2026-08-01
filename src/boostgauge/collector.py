@@ -113,7 +113,7 @@ class DataCollector:
     def __init__(
         self,
         config: Optional[Dict[str, Any]] = None,
-        snapshot_queue: Optional[queue.Queue] = None,
+        snapshot_queue: Optional[queue.Queue[SystemSnapshot]] = None,
     ) -> None:
         self._config = config or {}
         self.poll_interval: float = float(
@@ -127,30 +127,32 @@ class DataCollector:
             "handles": float(threshold_cfg.get("handles", DEFAULT_THRESHOLDS["handles"])),
         }
 
-        self.snapshot_queue: queue.Queue = (
-            snapshot_queue if snapshot_queue is not None
-            else queue.Queue(maxsize=MAX_QUEUE_SIZE)
+        self.snapshot_queue: queue.Queue[SystemSnapshot] = (
+            snapshot_queue if snapshot_queue is not None else queue.Queue(maxsize=MAX_QUEUE_SIZE)
         )
 
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
 
     def collect(self) -> SystemSnapshot:
-        """Collect current system metrics and return a SystemSnapshot."""
+        """Collect current system metrics and return a SystemSnapshot.
+
+        Must be implemented by platform subclasses.
+        """
         raise NotImplementedError("Subclasses must implement collect()")
 
     def put(self, snapshot: SystemSnapshot) -> None:
-        """Enqueue snapshot, evicting oldest item if queue is full."""
+        """Enqueue snapshot into snapshot_queue, evicting oldest item if queue is full."""
         try:
             self.snapshot_queue.put(snapshot, block=False)
         except queue.Full:
             try:
                 self.snapshot_queue.get(block=False)
-            except queue.Empty:
+            except queue.Empty:  # pragma: no cover
                 pass
             try:
                 self.snapshot_queue.put(snapshot, block=False)
-            except queue.Full:
+            except queue.Full:  # pragma: no cover
                 pass
 
     def _poll_loop(self) -> None:
@@ -160,7 +162,7 @@ class DataCollector:
             try:
                 snapshot = self.collect()
                 self.put(snapshot)
-            except Exception as err:
+            except Exception as err:  # pragma: no cover
                 logger.warning("Collection poll error: %s", err)
 
             elapsed = time.time() - start_time
