@@ -30,7 +30,6 @@ class Telltale:
         self.decay_rate: Optional[float] = float(decay_rate) if decay_rate is not None else None
         self.samples: deque[Sample] = deque()
         self.max_deque: deque[Sample] = deque()
-        self._wm_deque: deque[Sample] = deque()
         self.latest_timestamp: Optional[float] = None
 
     def update(self, timestamp: float, value: float) -> None:
@@ -42,42 +41,19 @@ class Telltale:
             raise ValueError("Timestamps must be non-decreasing")
 
         self.latest_timestamp = timestamp_float
-        cutoff = timestamp_float - self.window
 
+        cutoff = timestamp_float - self.window
         while self.samples and self.samples[0].timestamp < cutoff:
             self.samples.popleft()
 
-        while self._wm_deque and self._wm_deque[0].timestamp < cutoff:
-            self._wm_deque.popleft()
-
-        window_max = self._wm_deque[0].value if self._wm_deque else None
-
-        if self.decay_rate is None or self.decay_rate == 0.0:
-            while self.max_deque and self.max_deque[0].timestamp < cutoff:
-                self.max_deque.popleft()
-        else:
-            while self.max_deque:
-                head = self.max_deque[0]
-                if head.timestamp < cutoff:
-                    if window_max is not None:
-                        decayed_val = head.value - self.decay_rate * (timestamp_float - (head.timestamp + self.window))
-                        if decayed_val <= window_max:
-                            self.max_deque.popleft()
-                            continue
-                    else:
-                        self.max_deque.popleft()
-                        continue
-                break
-
-        while self._wm_deque and self._wm_deque[-1].value <= value_float:
-            self._wm_deque.pop()
+        while self.max_deque and self.max_deque[0].timestamp < cutoff:
+            self.max_deque.popleft()
 
         while self.max_deque and self.max_deque[-1].value <= value_float:
             self.max_deque.pop()
 
         new_sample = Sample(timestamp=timestamp_float, value=value_float)
         self.samples.append(new_sample)
-        self._wm_deque.append(new_sample)
         self.max_deque.append(new_sample)
 
     def current_peak(self, current_time: Optional[float] = None) -> Optional[float]:
@@ -91,22 +67,25 @@ class Telltale:
         if eval_time < self.latest_timestamp:
             raise ValueError("Evaluation time cannot precede latest timestamp")
 
-        if eval_time == self.latest_timestamp:
-            window_max = self._wm_deque[0].value if self._wm_deque else None
-        else:
-            cutoff = eval_time - self.window
-            window_max = max((s.value for s in self.samples if s.timestamp >= cutoff), default=None)
+        cutoff = eval_time - self.window
+        window_max: Optional[float] = None
+        for s in self.samples:
+            if s.timestamp >= cutoff:
+                if window_max is None or s.value > window_max:
+                    window_max = s.value
 
         if self.decay_rate is None or self.decay_rate == 0.0:
             return window_max
 
-        if not self.max_deque:
-            return window_max
+        peak_cand: Optional[float] = None
+        for s in self.max_deque:
+            decay_elapsed = max(0.0, eval_time - (s.timestamp + self.window))
+            decayed = s.value - self.decay_rate * decay_elapsed
+            if peak_cand is None or decayed > peak_cand:
+                peak_cand = decayed
 
-        peak_cand = max(
-            sample.value - self.decay_rate * max(0.0, eval_time - (sample.timestamp + self.window))
-            for sample in self.max_deque
-        )
+        if peak_cand is None:
+            return window_max
 
         if window_max is None:
             return peak_cand
@@ -117,5 +96,4 @@ class Telltale:
         """Clear all sample history and reset telltale state to initial uninitialized state."""
         self.samples.clear()
         self.max_deque.clear()
-        self._wm_deque.clear()
         self.latest_timestamp = None

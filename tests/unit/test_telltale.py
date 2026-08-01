@@ -159,3 +159,24 @@ def test_sample_dataclass_immutability() -> None:
     assert s.value == 2.0
     with pytest.raises(AttributeError):
         s.value = 3.0  # type: ignore[misc]
+
+
+def test_decay_evicts_expired_peak_when_decayed_below_window_max() -> None:
+    """Test update evicts expired max_deque entry when its decayed value <= window_max."""
+    # window=10, decay_rate=50: at t=11, sample (0,100) expires.
+    # window_max=50 (from (8,50)), decayed_val = 100 - 50*(11-10) = 50 <= 50 -> evicted.
+    t = Telltale(window=10.0, decay_rate=50.0)
+    t.update(0.0, 100.0)
+    t.update(8.0, 50.0)
+    t.update(11.0, 55.0)
+    # After eviction of (0,100) from max_deque, peak is now 55.0 from (11,55).
+    assert t.current_peak() == 55.0
+
+
+def test_current_peak_decay_with_all_samples_outside_active_window() -> None:
+    """Test current_peak with decay when eval_time places all samples outside the window."""
+    # samples deque still holds (0,100) but eval window [5, 15] excludes it.
+    # window_max is None; peak_cand = 100 - 15*(15-10) = 25.0.
+    t = Telltale(window=10.0, decay_rate=15.0)
+    t.update(0.0, 100.0)
+    assert t.current_peak(15.0) == 25.0
