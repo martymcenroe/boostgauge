@@ -36,5 +36,5 @@ def get_skin(name: str = "stingray") -> GaugeSkin:
         raise ValueError(f"Unknown skin: '{name}'. Available skins: {available}")
     return SKIN_REGISTRY[name]
 
-# Ensure stingray skin is registered on module import
+# Import built-in skins to trigger registration on package import
 from . import stingray  # noqa: F401
