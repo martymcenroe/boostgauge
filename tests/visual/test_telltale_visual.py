@@ -179,7 +179,6 @@ def test_legend_modifies_origin_region():
 
     result = renderer.draw_legend(img, peaks, origin=(10.0, 10.0), supersample_factor=4)
 
-    # At least one pixel in the legend region should differ from background
     modified = False
     for x in range(10, 30):
         for y in range(10, 100):

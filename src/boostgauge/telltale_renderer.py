@@ -38,7 +38,7 @@ DEFAULT_TELLTALE_STYLES: Dict[str, TelltaleStyle] = {
     "1m": TelltaleStyle(
         window_name="1m",
         window_seconds=60.0,
-        color=(0, 225, 255, 180),  # Cyan
+        color=(0, 225, 255, 180),
         width=3,
         line_style="solid",
         description="1 Min Peak",
@@ -46,7 +46,7 @@ DEFAULT_TELLTALE_STYLES: Dict[str, TelltaleStyle] = {
     "10m": TelltaleStyle(
         window_name="10m",
         window_seconds=600.0,
-        color=(255, 140, 0, 180),  # Orange
+        color=(255, 140, 0, 180),
         width=3,
         line_style="solid",
         description="10 Min Peak",
@@ -54,7 +54,7 @@ DEFAULT_TELLTALE_STYLES: Dict[str, TelltaleStyle] = {
     "1h": TelltaleStyle(
         window_name="1h",
         window_seconds=3600.0,
-        color=(220, 0, 220, 180),  # Magenta
+        color=(220, 0, 220, 180),
         width=3,
         line_style="solid",
         description="1 Hour Peak",
@@ -62,7 +62,7 @@ DEFAULT_TELLTALE_STYLES: Dict[str, TelltaleStyle] = {
     "all_time": TelltaleStyle(
         window_name="all_time",
         window_seconds=None,
-        color=(255, 40, 40, 180),  # Red
+        color=(255, 40, 40, 180),
         width=3,
         line_style="solid",
         description="All-Time Peak",
@@ -169,7 +169,6 @@ class TelltaleRenderer:
         draw = ImageDraw.Draw(overlay)
 
         cx, cy = center
-        # Render telltales in fixed z-order: all_time -> 1h -> 10m -> 1m
         z_order = ["all_time", "1h", "10m", "1m"]
         for window_name in z_order:
             peak_val = peaks.get(window_name)
