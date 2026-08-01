@@ -6,7 +6,7 @@ Issue #7: Configuration File and CLI Arguments
 import sys
 from typing import List, Optional
 
-from boostgauge.config import ConfigManager, WindowPosition
+from boostgauge.config import ConfigManager
 
 
 def main(args_list: Optional[List[str]] = None) -> int:

@@ -98,16 +98,13 @@ def save_config_file(config: AppConfig, config_path: Path) -> None:
 
 
 def _validate_threshold_pair(pair_dict: Dict[str, Any], metric_name: str) -> ThresholdPair:
-    if "yellow" not in pair_dict or "red" not in pair_dict:
-        raise ValueError(f"Threshold for '{metric_name}' must contain 'yellow' and 'red' values")
-
     yellow = float(pair_dict["yellow"])
     red = float(pair_dict["red"])
 
-    if yellow < 0 or red < 0:
-        raise ValueError(f"Thresholds for '{metric_name}' must be non-negative")
     if yellow >= red:
-        raise ValueError(f"Metric '{metric_name}' yellow threshold ({yellow}) must be less than red threshold ({red})")
+        raise ValueError(
+            f"Metric '{metric_name}' yellow threshold ({yellow}) must be less than red threshold ({red})"
+        )
 
     return ThresholdPair(yellow=yellow, red=red)
 
@@ -193,16 +190,15 @@ def parse_cli_args(args_list: Optional[List[str]] = None) -> argparse.Namespace:
 def merge_config(file_config: AppConfig, cli_args: argparse.Namespace) -> AppConfig:
     """Merge command-line argument overrides into configuration loaded from disk."""
     config_dict = asdict(file_config)
-
-    if cli_args.theme is not None:
-        config_dict["theme"] = cli_args.theme
-    if cli_args.size is not None:
-        config_dict["size"] = cli_args.size
-    if cli_args.opacity is not None:
-        config_dict["opacity"] = cli_args.opacity
-    if cli_args.polling_interval is not None:
-        config_dict["polling_interval_seconds"] = cli_args.polling_interval
-
+    overrides = {
+        "theme": cli_args.theme,
+        "size": cli_args.size,
+        "opacity": cli_args.opacity,
+        "polling_interval_seconds": cli_args.polling_interval,
+    }
+    for key, value in overrides.items():
+        if value is not None:
+            config_dict[key] = value
     return validate_config_dict(config_dict)
 
 
@@ -214,8 +210,7 @@ class ConfigManager:
         config_path: Optional[Path] = None,
         cli_args: Optional[List[str]] = None
     ) -> None:
-        parsed_cli = parse_cli_args(cli_args if cli_args is not None else [])
-
+        parsed_cli = parse_cli_args(cli_args)
         if parsed_cli.config is not None:
             self.config_path = Path(parsed_cli.config)
         elif config_path is not None:

@@ -13,6 +13,7 @@ from boostgauge.config import (
     ThresholdPair,
     ThresholdsConfig,
     WindowPosition,
+    _validate_threshold_pair,
     get_default_config_path,
     load_config_file,
     merge_config,
@@ -253,6 +254,16 @@ def test_merge_config_partial_overrides():
     assert merged.polling_interval_seconds == 2.0
 
 
+def test_merge_config_polling_interval_override():
+    """Verify merge_config overrides polling_interval_seconds when --polling-interval is provided."""
+    file_config = AppConfig(polling_interval_seconds=2.0)
+    cli_args = parse_cli_args(["--polling-interval", "0.5"])
+    merged = merge_config(file_config, cli_args)
+
+    assert merged.polling_interval_seconds == 0.5
+    assert merged.theme == "dark"
+
+
 def test_config_manager_uses_default_path_when_none(tmp_path: Path, monkeypatch):
     """Verify ConfigManager uses get_default_config_path() when config_path is None."""
     expected_path = tmp_path / "config.json"
@@ -395,3 +406,21 @@ def test_default_config_path_win32_no_appdata(monkeypatch):
     monkeypatch.delenv("APPDATA", raising=False)
     path = get_default_config_path()
     assert path == Path.home() / "AppData" / "Roaming" / "boostgauge" / "config.json"
+
+
+def test_validate_threshold_pair_missing_keys():
+    """Verify _validate_threshold_pair raises ValueError when yellow or red key is missing."""
+    with pytest.raises(ValueError, match="must contain 'yellow' and 'red' values"):
+        _validate_threshold_pair({"yellow": 10.0}, "conpty")
+
+    with pytest.raises(ValueError, match="must contain 'yellow' and 'red' values"):
+        _validate_threshold_pair({"red": 50.0}, "conpty")
+
+
+def test_validate_threshold_pair_negative_values():
+    """Verify _validate_threshold_pair raises ValueError for negative threshold values."""
+    with pytest.raises(ValueError, match="must be non-negative"):
+        _validate_threshold_pair({"yellow": -5.0, "red": 10.0}, "conpty")
+
+    with pytest.raises(ValueError, match="must be non-negative"):
+        _validate_threshold_pair({"yellow": 5.0, "red": -1.0}, "conpty")
