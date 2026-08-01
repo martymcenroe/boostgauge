@@ -6,9 +6,10 @@ Issue #5: Always-on-top window with drag, minimize, and transparency.
 from __future__ import annotations
 
 from typing import Dict
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
+from PIL import Image as PILImage
 
 from boostgauge.window import GaugeWindow
 
@@ -451,8 +452,6 @@ def test_on_right_click_is_noop() -> None:
 
 def test_update_image_noop_without_root() -> None:
     """update_image does nothing when root is None."""
-    from PIL import Image as PILImage
-
     win = GaugeWindow()
     img = PILImage.new("RGBA", (256, 256), (0, 0, 0, 255))
     win.update_image(img)
@@ -557,3 +556,93 @@ def test_on_mouse_wheel_missing_delta_attribute() -> None:
     event = MagicMock(spec=[])
     win._on_mouse_wheel(event)
     assert win.size == 256
+
+
+def test_setup_window_configures_root() -> None:
+    """setup_window assigns root, creates canvas, and binds all mouse events."""
+    win = GaugeWindow(config={"x": 10, "y": 20, "size": 256, "opacity": 1.0})
+    mock_root = MagicMock()
+    mock_canvas = MagicMock()
+
+    with patch("tkinter.Canvas", return_value=mock_canvas):
+        win.setup_window(mock_root)
+
+    assert win.root is mock_root
+    assert win.canvas is mock_canvas
+    mock_root.overrideredirect.assert_called_once_with(True)
+    mock_root.geometry.assert_called_once_with("256x256+10+20")
+    mock_root.attributes.assert_any_call("-topmost", True)
+    mock_canvas.pack.assert_called_once()
+
+
+def test_setup_window_alpha_exception_suppressed() -> None:
+    """setup_window logs and suppresses exceptions from alpha attribute."""
+    win = GaugeWindow(config={"opacity": 0.9})
+    mock_root = MagicMock()
+    mock_canvas = MagicMock()
+
+    def attrs_side_effect(*args):
+        if args[0] == "-alpha":
+            raise Exception("alpha not supported")
+        return MagicMock()
+
+    mock_root.attributes.side_effect = attrs_side_effect
+
+    with patch("tkinter.Canvas", return_value=mock_canvas):
+        win.setup_window(mock_root)
+
+    assert win.canvas is mock_canvas
+
+
+def test_setup_window_transparent_color_exception_suppressed() -> None:
+    """setup_window logs and suppresses exceptions from transparentcolor on Windows."""
+    win = GaugeWindow()
+    mock_root = MagicMock()
+    mock_canvas = MagicMock()
+
+    def attrs_side_effect(*args):
+        if args[0] == "-transparentcolor":
+            raise Exception("not supported")
+        return MagicMock()
+
+    mock_root.attributes.side_effect = attrs_side_effect
+
+    with patch("platform.system", return_value="Windows"), \
+         patch("tkinter.Canvas", return_value=mock_canvas):
+        win.setup_window(mock_root)
+
+    assert win.canvas is mock_canvas
+
+
+def test_setup_window_non_windows_canvas_bg() -> None:
+    """setup_window uses root.cget('bg') for canvas background on non-Windows."""
+    win = GaugeWindow()
+    mock_root = MagicMock()
+    mock_root.cget.return_value = "gray"
+    mock_canvas = MagicMock()
+
+    with patch("platform.system", return_value="Linux"), \
+         patch("tkinter.Canvas", return_value=mock_canvas):
+        win.setup_window(mock_root)
+
+    assert win.canvas is mock_canvas
+    mock_root.cget.assert_called_with("bg")
+
+
+def test_update_image_with_root_and_canvas() -> None:
+    """update_image updates canvas with PhotoImage when root and canvas are set."""
+    win = GaugeWindow()
+    mock_root = MagicMock()
+    mock_canvas = MagicMock()
+    win.root = mock_root
+    win.canvas = mock_canvas
+
+    img = PILImage.new("RGBA", (256, 256))
+    mock_photo = MagicMock()
+
+    with patch("boostgauge.window.ImageTk.PhotoImage", return_value=mock_photo):
+        win.update_image(img)
+
+    assert win.photo_image is mock_photo
+    mock_canvas.delete.assert_called_once_with("all")
+    mock_canvas.create_image.assert_called_once_with(0, 0, anchor="nw", image=mock_photo)

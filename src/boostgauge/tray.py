@@ -33,7 +33,6 @@ class TrayManager:
         on_toggle_topmost: Callable[[], None],
         on_quit: Callable[[], None],
     ) -> None:
-        """Initialize tray manager with UI callback hooks."""
         self.on_restore = on_restore
         self.on_toggle_topmost = on_toggle_topmost
         self.on_quit = on_quit
@@ -94,7 +93,6 @@ class TrayManager:
             self.icon = None
 
     def _run_icon(self) -> None:
-        """Target loop execution for daemon thread."""
         if self.icon is not None:
             self.icon.run()
 

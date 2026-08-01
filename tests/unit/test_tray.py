@@ -208,7 +208,6 @@ def test_update_status_skips_icon_update_when_not_running() -> None:
     tray._is_running = False
 
     tray.update_status("red")
-    # icon.icon must not have been assigned a PIL Image
     assert not isinstance(mock_icon.icon, Image.Image)
 
 
@@ -266,8 +265,6 @@ def test_start_creates_pystray_icon_with_correct_name() -> None:
     tray = _make_tray()
 
     created_names: list = []
-
-    original_icon = __import__("pystray").Icon
 
     def capture_icon(name, *args, **kwargs):
         created_names.append(name)

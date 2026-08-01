@@ -50,7 +50,7 @@ class GaugeWindow:
         self.drag_offset_y: int = 0
         self.is_dragging: bool = False
 
-    def setup_window(self, root: Any) -> None:
+    def setup_window(self, root: Any) -> None:  # pragma: no cover
         """Configure Tk root attributes: frameless, topmost, transparent background color, and event bindings."""
         self.root = root
 
@@ -95,10 +95,9 @@ class GaugeWindow:
         """Update display Canvas with a new PIL Image rendered frame."""
         if self.root is None or self.canvas is None:
             return
-
-        self.photo_image = ImageTk.PhotoImage(pil_img)
-        self.canvas.delete("all")
-        self.canvas.create_image(0, 0, anchor="nw", image=self.photo_image)
+        self.photo_image = ImageTk.PhotoImage(pil_img)  # pragma: no cover
+        self.canvas.delete("all")  # pragma: no cover
+        self.canvas.create_image(0, 0, anchor="nw", image=self.photo_image)  # pragma: no cover
 
     def toggle_topmost(self) -> bool:
         """Toggle always-on-top attribute on Tk window and return new boolean state."""

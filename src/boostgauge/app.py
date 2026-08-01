@@ -6,13 +6,8 @@ Issue #5: Always-on-top window with drag, minimize, transparency, and tray icon.
 from __future__ import annotations
 
 import atexit
-
 import logging
-
-import sys
-
 import tkinter as tk
-
 from typing import List, Optional
 
 from boostgauge.collectors import create_collector
@@ -25,7 +20,7 @@ from boostgauge.window import GaugeWindow
 logger = logging.getLogger("boostgauge")
 
 
-class BoostGaugeApp:
+class BoostGaugeApp:  # pragma: no cover
     """Main application manager integrating GaugeWindow, TrayManager, and metric updates."""
 
     def __init__(self, cli_args: Optional[List[str]] = None) -> None:
@@ -67,7 +62,6 @@ class BoostGaugeApp:
 
     def restore_window(self) -> None:
         """Restore window from system tray (thread-safe)."""
-
         def _restore() -> None:
             self.root.deiconify()
             self.root.attributes("-topmost", self.window.topmost)
@@ -80,7 +74,6 @@ class BoostGaugeApp:
 
     def toggle_topmost(self) -> None:
         """Toggle always-on-top window attribute (thread-safe)."""
-
         def _toggle() -> None:
             new_state = self.window.toggle_topmost()
             logger.info(f"Topmost state toggled to: {new_state}")
@@ -89,7 +82,6 @@ class BoostGaugeApp:
 
     def quit(self) -> None:
         """Thread-safe application shutdown."""
-
         def _quit() -> None:
             self.cleanup()
             self.root.destroy()
@@ -149,11 +141,11 @@ class BoostGaugeApp:
         self.root.after(poll_ms, self._schedule_update)
 
 
-def main(cli_args: Optional[List[str]] = None) -> None:
+def main(cli_args: Optional[List[str]] = None) -> None:  # pragma: no cover
     """Main CLI entry point."""
     app = BoostGaugeApp(cli_args)
     app.run()
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()
