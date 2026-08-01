@@ -6,9 +6,13 @@ Issue #5: Always-on-top window with drag, minimize, transparency, and tray icon.
 from __future__ import annotations
 
 import atexit
+
 import logging
+
 import sys
+
 import tkinter as tk
+
 from typing import List, Optional
 
 from boostgauge.collectors import create_collector
@@ -63,6 +67,7 @@ class BoostGaugeApp:
 
     def restore_window(self) -> None:
         """Restore window from system tray (thread-safe)."""
+
         def _restore() -> None:
             self.root.deiconify()
             self.root.attributes("-topmost", self.window.topmost)
@@ -75,6 +80,7 @@ class BoostGaugeApp:
 
     def toggle_topmost(self) -> None:
         """Toggle always-on-top window attribute (thread-safe)."""
+
         def _toggle() -> None:
             new_state = self.window.toggle_topmost()
             logger.info(f"Topmost state toggled to: {new_state}")
@@ -83,6 +89,7 @@ class BoostGaugeApp:
 
     def quit(self) -> None:
         """Thread-safe application shutdown."""
+
         def _quit() -> None:
             self.cleanup()
             self.root.destroy()

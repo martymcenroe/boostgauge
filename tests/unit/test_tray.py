@@ -208,8 +208,8 @@ def test_update_status_skips_icon_update_when_not_running() -> None:
     tray._is_running = False
 
     tray.update_status("red")
-    assert not hasattr(mock_icon, "_icon_set")
-    mock_icon.__setattr__.assert_not_called() if hasattr(mock_icon, "__setattr__") else None
+    # icon.icon must not have been assigned a PIL Image
+    assert not isinstance(mock_icon.icon, Image.Image)
 
 
 def test_update_status_no_icon_is_noop() -> None:
