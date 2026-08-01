@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 import sys
-from typing import Any, Dict, List, Optional, Tuple, TypedDict
+from typing import Any, Dict, List, Optional, Tuple, TypedDict, cast
 
 
 class ThresholdRange(TypedDict):
@@ -29,6 +29,22 @@ class WindowPosition(TypedDict):
     y: int
 
 
+class WindowConfigDict(TypedDict):
+    x: int
+    y: int
+    size: int
+    topmost: bool
+    opacity: float
+    compact_mode: bool
+
+
+class VirtualScreenBounds(TypedDict):
+    min_x: int
+    min_y: int
+    max_x: int
+    max_y: int
+
+
 class TelltaleWindowsConfig(TypedDict):
     short: int
     medium: int
@@ -41,6 +57,7 @@ class BoostGaugeConfig(TypedDict):
     size: int
     opacity: float
     always_on_top: bool
+    compact_mode: bool
     position: WindowPosition
     thresholds: ThresholdsConfig
     telltale_windows: TelltaleWindowsConfig
@@ -57,6 +74,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "size": 300,
     "opacity": 1.0,
     "always_on_top": True,
+    "compact_mode": False,
     "position": {"x": 100, "y": 100},
     "thresholds": {
         "conpty": {"yellow": 10.0, "red": 20.0},
@@ -74,9 +92,18 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     "show_session_count": True,
 }
 
+_WINDOW_CONFIG_DEFAULTS: WindowConfigDict = {
+    "x": 100,
+    "y": 100,
+    "size": 256,
+    "topmost": True,
+    "opacity": 1.0,
+    "compact_mode": False,
+}
+
 
 def get_default_config_path() -> Path:
-    """Return platform-dependent default configuration path (~/.boostgauge/config.json or %APPDATA%/boostgauge/config.json)."""
+    """Return platform-dependent default configuration path."""
     if sys.platform == "win32":
         appdata = os.environ.get("APPDATA")
         if appdata:
@@ -159,7 +186,13 @@ def validate_config(config: Dict[str, Any]) -> Dict[str, Any]:
         raise ValueError(f"always_on_top must be a boolean, got {always_on_top}")
 
     pos = config.get("position")
-    if not isinstance(pos, dict) or "x" not in pos or "y" not in pos or not isinstance(pos["x"], int) or not isinstance(pos["y"], int):
+    if (
+        not isinstance(pos, dict)
+        or "x" not in pos
+        or "y" not in pos
+        or not isinstance(pos["x"], int)
+        or not isinstance(pos["y"], int)
+    ):
         raise ValueError(f"position must be a dict with integer 'x' and 'y' keys, got {pos}")
 
     thresholds = config.get("thresholds")
@@ -177,7 +210,9 @@ def validate_config(config: Dict[str, Any]) -> Dict[str, Any]:
         if not isinstance(y, (int, float)) or not isinstance(r, (int, float)):
             raise ValueError(f"threshold values for '{metric}' must be numbers")
         if y < 0 or r < y:
-            raise ValueError(f"threshold values for '{metric}' must satisfy 0 <= yellow <= red, got yellow={y}, red={r}")
+            raise ValueError(
+                f"threshold values for '{metric}' must satisfy 0 <= yellow <= red, got yellow={y}, red={r}"
+            )
 
     telltale = config.get("telltale_windows")
     if not isinstance(telltale, dict):
@@ -255,3 +290,55 @@ def reset_config_file(path: Path) -> Dict[str, Any]:
     default_config = get_default_config()
     save_config_file(default_config, resolved_path)
     return default_config
+
+
+class WindowConfig:
+    """Manages reading, writing, and validating window state settings stored on disk."""
+
+    def __init__(self, config_path: Optional[Path] = None) -> None:
+        self.config_path = config_path or get_default_config_path()
+
+    def load(self) -> WindowConfigDict:
+        resolved_path = Path(self.config_path).expanduser().resolve()
+        if not resolved_path.exists():
+            return cast(WindowConfigDict, copy.copy(_WINDOW_CONFIG_DEFAULTS))
+        try:
+            data = load_config_file(resolved_path)
+        except ValueError:
+            return cast(WindowConfigDict, copy.copy(_WINDOW_CONFIG_DEFAULTS))
+        pos = data.get("position", data.get("window_position", {"x": 100, "y": 100}))
+        return cast(WindowConfigDict, {
+            "x": int(pos.get("x", 100)),
+            "y": int(pos.get("y", 100)),
+            "size": int(data.get("size", 256)),
+            "topmost": bool(data.get("always_on_top", True)),
+            "opacity": float(data.get("opacity", 1.0)),
+            "compact_mode": bool(data.get("compact_mode", False)),
+        })
+
+    def save(self, config: WindowConfigDict) -> None:
+        try:
+            data = load_config_file(self.config_path)
+        except ValueError:
+            data = get_default_config()
+        data["position"] = {"x": config["x"], "y": config["y"]}
+        data["size"] = config["size"]
+        data["always_on_top"] = config["topmost"]
+        data["opacity"] = config["opacity"]
+        data["compact_mode"] = config["compact_mode"]
+        save_config_file(data, self.config_path)
+
+    def validate_bounds(
+        self, config: WindowConfigDict, bounds: VirtualScreenBounds
+    ) -> WindowConfigDict:
+        """Clamp window top-left (x, y) coordinates so the window stays entirely visible within virtual screen rect."""
+        validated = dict(config)
+        size = validated["size"]
+        min_x = bounds["min_x"]
+        min_y = bounds["min_y"]
+        max_x = bounds["max_x"]
+        max_y = bounds["max_y"]
+
+        validated["x"] = max(min_x, min(validated["x"], max_x - size))
+        validated["y"] = max(min_y, min(validated["y"], max_y - size))
+        return cast(WindowConfigDict, validated)

@@ -21,6 +21,9 @@ from boostgauge.config import (
     save_config_file,
     update_window_geometry,
     validate_config,
+    WindowConfig,
+    WindowConfigDict,
+    VirtualScreenBounds,
 )
 
 
@@ -481,3 +484,166 @@ def test_cli_args_default_values():
     assert args.no_topmost is False
     assert args.config is None
     assert args.reset_config is False
+
+
+def test_window_config_load_and_save(tmp_path: Path):
+    """T110: Test loading and saving WindowConfigDict with WindowConfig."""
+    cfg_file = tmp_path / "test_config.json"
+    wc = WindowConfig(config_path=cfg_file)
+
+    initial = wc.load()
+    assert initial["size"] == 256
+    assert initial["topmost"] is True
+
+    updated: WindowConfigDict = {
+        "x": 400,
+        "y": 500,
+        "size": 320,
+        "topmost": False,
+        "opacity": 0.9,
+        "compact_mode": True,
+    }
+    wc.save(updated)
+
+    restored = wc.load()
+    assert restored["x"] == 400
+    assert restored["y"] == 500
+    assert restored["size"] == 320
+    assert restored["topmost"] is False
+    assert restored["opacity"] == 0.9
+    assert restored["compact_mode"] is True
+
+
+def test_virtual_screen_bounds_validation(tmp_path: Path):
+    """T120: Test multi-monitor coordinate clamping."""
+    wc = WindowConfig(config_path=tmp_path / "cfg.json")
+    bounds: VirtualScreenBounds = {"min_x": 0, "min_y": 0, "max_x": 1920, "max_y": 1080}
+    out_of_bounds: WindowConfigDict = {
+        "x": 2500,
+        "y": -100,
+        "size": 256,
+        "topmost": True,
+        "opacity": 1.0,
+        "compact_mode": False,
+    }
+    clamped = wc.validate_bounds(out_of_bounds, bounds)
+    assert clamped["x"] == 1664
+    assert clamped["y"] == 0
+
+
+def test_virtual_screen_bounds_x_clamp_left(tmp_path: Path):
+    """validate_bounds clamps x to min_x when window is off left edge."""
+    wc = WindowConfig(config_path=tmp_path / "cfg.json")
+    bounds: VirtualScreenBounds = {"min_x": 0, "min_y": 0, "max_x": 1920, "max_y": 1080}
+    config: WindowConfigDict = {
+        "x": -50,
+        "y": 100,
+        "size": 256,
+        "topmost": True,
+        "opacity": 1.0,
+        "compact_mode": False,
+    }
+    clamped = wc.validate_bounds(config, bounds)
+    assert clamped["x"] == 0
+
+
+def test_virtual_screen_bounds_y_clamp_bottom(tmp_path: Path):
+    """validate_bounds clamps y so window stays fully visible at bottom edge."""
+    wc = WindowConfig(config_path=tmp_path / "cfg.json")
+    bounds: VirtualScreenBounds = {"min_x": 0, "min_y": 0, "max_x": 1920, "max_y": 1080}
+    config: WindowConfigDict = {
+        "x": 100,
+        "y": 9999,
+        "size": 256,
+        "topmost": True,
+        "opacity": 1.0,
+        "compact_mode": False,
+    }
+    clamped = wc.validate_bounds(config, bounds)
+    assert clamped["y"] == 824  # 1080 - 256
+
+
+def test_virtual_screen_bounds_preserves_other_fields(tmp_path: Path):
+    """validate_bounds preserves non-coordinate fields unchanged."""
+    wc = WindowConfig(config_path=tmp_path / "cfg.json")
+    bounds: VirtualScreenBounds = {"min_x": 0, "min_y": 0, "max_x": 1920, "max_y": 1080}
+    config: WindowConfigDict = {
+        "x": 100,
+        "y": 100,
+        "size": 320,
+        "topmost": False,
+        "opacity": 0.75,
+        "compact_mode": True,
+    }
+    clamped = wc.validate_bounds(config, bounds)
+    assert clamped["size"] == 320
+    assert clamped["topmost"] is False
+    assert clamped["opacity"] == 0.75
+    assert clamped["compact_mode"] is True
+
+
+def test_window_config_load_defaults_when_file_missing(tmp_path: Path):
+    """WindowConfig.load() returns safe defaults when config file does not exist."""
+    cfg_file = tmp_path / "nonexistent.json"
+    wc = WindowConfig(config_path=cfg_file)
+    result = wc.load()
+    assert result["size"] == 256
+    assert result["topmost"] is True
+    assert result["opacity"] == 1.0
+    assert result["compact_mode"] is False
+    assert isinstance(result["x"], int)
+    assert isinstance(result["y"], int)
+
+
+def test_window_config_save_creates_directories(tmp_path: Path):
+    """WindowConfig.save() creates missing parent directories."""
+    cfg_file = tmp_path / "nested" / "dir" / "config.json"
+    wc = WindowConfig(config_path=cfg_file)
+    config: WindowConfigDict = {
+        "x": 10,
+        "y": 20,
+        "size": 256,
+        "topmost": True,
+        "opacity": 1.0,
+        "compact_mode": False,
+    }
+    wc.save(config)
+    assert cfg_file.exists()
+    restored = wc.load()
+    assert restored["x"] == 10
+    assert restored["y"] == 20
+
+
+def test_platform_independent_path_comparison():
+    """Verify paths are asserted using pathlib.Path objects without string separator reliance."""
+    default_path = get_default_config_path()
+    assert isinstance(default_path, Path)
+    assert default_path.name == "config.json"
+
+
+def test_window_config_dict_validation(tmp_path: Path):
+    """WindowConfigDict fields are correctly typed after load/save round-trip."""
+    cfg_file = tmp_path / "config.json"
+    wc = WindowConfig(config_path=cfg_file)
+
+    config: WindowConfigDict = {
+        "x": 150,
+        "y": 250,
+        "size": 384,
+        "topmost": True,
+        "opacity": 0.8,
+        "compact_mode": False,
+    }
+    wc.save(config)
+    loaded = wc.load()
+
+    assert isinstance(loaded["x"], int)
+    assert isinstance(loaded["y"], int)
+    assert isinstance(loaded["size"], int)
+    assert isinstance(loaded["topmost"], bool)
+    assert isinstance(loaded["opacity"], float)
+    assert isinstance(loaded["compact_mode"], bool)
+    assert loaded["x"] == 150
+    assert loaded["y"] == 250
+    assert loaded["size"] == 384
+    assert loaded["opacity"] == 0.8
