@@ -28,6 +28,8 @@ Image generated 2026-05-11 via Gemini 2.5 Flash Image. Source prompt is preserve
 
 **The image is binding.** Implementation outputs must be indistinguishable from this image within the visual-regression tolerance defined by `0001-test-strategy.md` §3 (pixel-RMS ≤ 1.0/255 against the committed baseline). The image is the human-facing target; the per-test fixtures in `tests/visual/baselines/` are the programmatic comparators. They must not drift apart.
 
+> **Revision note (2026-08-09, rulings #228/#229):** the needle and redline colors were split (candy-apple needle, brick band — see §Main needle and §Redline arc) after the pipeline caught the matching-reds contradiction. The canonical image predates the split and still shows matching reds, so **for needle and band color the sections below are binding until the image is regenerated (tracked in #230)**. For every other element the image remains binding as stated. The band's ring-segment geometry already matches the image.
+
 ---
 
 ## Decisions, codified
@@ -70,7 +72,7 @@ Each subsection lists one visual decision, its value, and its rationale where no
 
 ### Main needle
 
-- **Color:** Red. Saturated, slightly orange-shifted red (not pink, not magenta) — what 1970s factory paints actually used.
+- **Color:** Luminescent candy-apple red. Bright, saturated, slightly orange-shifted (not pink, not magenta) — the vivid red of 1970s factory paint fresh off the line. **Deliberately a different red from the redline band's brick red** so the needle tip reads as a separate element when it crosses the band (ruling on #228, 2026-08-09; the pre-revision spec said the two reds matched, which contradicted #1's distinctness criterion).
 - **Geometry:** Narrow tip, slightly wider at the pivot mount. A small counterweight extends past the pivot opposite the pointer end — visible in the canonical image as the short red stub behind the pivot cap.
 - **Position at rest:** Pointing to 0 (bottom-left of the arc).
 - **Sweep:** Arc from 0 (lower-left) clockwise to 100 (lower-right). The needle sweeps through the upper portion of the dial.
@@ -105,10 +107,10 @@ Per #2 (rendering) consuming #41 (algorithm). Visible only when their `current_p
 
 ### Redline arc
 
-- **Color:** Saturated red, matching the main needle.
+- **Color:** Brick red — deeper and browner than the main needle's candy-apple red, visibly a different hue at a glance. (Ruling on #228, 2026-08-09. The pre-revision spec said "matching the main needle," which made a needle tip inside the band indistinguishable from it; the pipeline's requirements gate caught the contradiction with #1's distinctness criterion.)
 - **Position:** Upper portion of the scale, **starting at 60** and continuing to 100. (The canonical image's redline starts here — deliberately aggressive. A gauge that redlines at 60% communicates "you're already pushing it" before the user is in trouble.)
-- **Form:** A solid arc band along the outside of the tick-mark ring, hugging the inner edge of the bezel.
-- **Width:** Approximately 5% of dial radius.
+- **Form:** A solid ring band occupying approximately the **outer 80%–100% of the dial radius**, spanning scale values 60 to 100. It is a rim band, never a pie segment from the origin — the needle crosses matte black for most of its length and only its tip enters the band. Tick marks in the 60–100 range render on top of the band in white, as in the canonical image.
+- **Distinctness is testable:** at any value inside 60–100 the needle tip lies within the band; a render-tier test samples tip pixels against band pixels and the two reds must differ (per #1's acceptance criteria).
 
 ## What this doc binds
 
