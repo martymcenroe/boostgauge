@@ -1,0 +1,37 @@
+name: Release to PyPI
+
+# Tag-triggered publish to PyPI via OIDC Trusted Publisher (no token in
+# secrets). Configure the publisher per runbook 0934 BEFORE the first
+# tag push — pre-#0934 tag pushes will fail at the publish step with a
+# "no pending publisher" error from PyPI.
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+permissions:
+  id-token: write  # Required for OIDC trust handshake with PyPI.
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: pypi  # Must match the environment registered on PyPI.
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Build distributions
+        run: poetry build
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        # No password / token — OIDC Trusted Publisher handles auth.

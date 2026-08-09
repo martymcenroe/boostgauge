@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>boostgauge &mdash; real-time system monitor styled like a racing tachometer</title>
+  <meta name="description" content="Always-on-top desktop tachometer for monitoring system pressure while running concurrent AI coding sessions. ConPTY, memory, processes, handles &mdash; one gauge, peak-hold needles.">
+
+  <meta property="og:title" content="boostgauge">
+  <meta property="og:description" content="A racing tachometer for your system, built live on stream.">
+  <meta property="og:image" content="https://boostgauge.martymcenroe.ai/gauge.jpg">
+  <meta property="og:url" content="https://boostgauge.martymcenroe.ai/">
+  <meta property="og:type" content="website">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="boostgauge">
+  <meta name="twitter:description" content="A racing tachometer for your system, built live on stream.">
+  <meta name="twitter:image" content="https://boostgauge.martymcenroe.ai/gauge.jpg">
+
+  <style>
+    :root {
+      --bg: #0a0a0a;
+      --surface: #141414;
+      --border: #2a2a2a;
+      --text: #f0e8d0;
+      --muted: #888;
+      --accent: #ff4500;
+      --accent-warm: #ffb000;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 48px 24px 96px;
+    }
+
+    .hero {
+      display: block;
+      width: 100%;
+      max-width: 560px;
+      margin: 0 auto 32px;
+      border-radius: 12px;
+      box-shadow: 0 0 64px rgba(255, 69, 0, 0.18);
+    }
+
+    h1 {
+      font-size: 56px;
+      letter-spacing: -1px;
+      margin: 0 0 8px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    h1 .accent {
+      color: var(--accent);
+    }
+
+    .tagline {
+      text-align: center;
+      font-size: 18px;
+      color: var(--accent-warm);
+      margin: 0 0 32px;
+      font-weight: 500;
+    }
+
+    .description {
+      font-size: 17px;
+      color: var(--text);
+      margin: 0 0 24px;
+    }
+
+    .description code {
+      background: var(--surface);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 15px;
+      color: var(--accent-warm);
+    }
+
+    .status {
+      background: var(--surface);
+      border-left: 3px solid var(--accent);
+      padding: 16px 20px;
+      margin: 32px 0;
+      border-radius: 0 6px 6px 0;
+      font-size: 15px;
+    }
+
+    .status strong {
+      color: var(--accent-warm);
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    pre.install {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 16px 20px;
+      border-radius: 6px;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 16px;
+      color: var(--text);
+      overflow-x: auto;
+      margin: 24px 0 32px;
+    }
+
+    pre.install::before {
+      content: "$ ";
+      color: var(--muted);
+    }
+
+    .ctas {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin: 32px 0;
+    }
+
+    .cta {
+      flex: 1 1 200px;
+      display: inline-block;
+      padding: 14px 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text);
+      text-decoration: none;
+      border-radius: 6px;
+      text-align: center;
+      font-size: 15px;
+      font-weight: 500;
+      transition: background 0.15s, border-color 0.15s, transform 0.15s;
+    }
+
+    .cta:hover {
+      background: #1c1c1c;
+      border-color: var(--muted);
+    }
+
+    .cta-primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+      flex-basis: 100%;
+    }
+
+    .cta-primary:hover {
+      background: #ff5a1a;
+      border-color: #ff5a1a;
+      transform: translateY(-1px);
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      padding: 32px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    footer a {
+      color: var(--muted);
+      text-decoration: none;
+      border-bottom: 1px dotted var(--muted);
+    }
+
+    footer a:hover {
+      color: var(--text);
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 40px; }
+      main { padding: 32px 16px 64px; }
+      .cta { flex-basis: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <img src="gauge.jpg" alt="boostgauge tachometer reference render" class="hero">
+
+    <h1>boost<span class="accent">gauge</span></h1>
+    <p class="tagline">Real-time system monitor styled like a racing tachometer.</p>
+
+    <p class="description">
+      Lightweight, always-on-top desktop gauge that tracks <code>ConPTY</code> allocations, memory, processes, and handles &mdash; collapsing them into a single composite needle with peak-hold (telltale) marks at 1m, 10m, 1h, and all-time windows.
+    </p>
+
+    <p class="description">
+      Built for developers running multiple concurrent AI coding sessions who need real-time visibility into invisible resource pressure.
+    </p>
+
+    <div class="status">
+      <strong>Pre-release</strong>
+      Version <code style="background: transparent; color: var(--text);">0.0.0</code> currently reserves the name on PyPI. The first real release ships during the AssemblyZero speedrun launch &mdash; built from zero to PyPI on stream.
+    </div>
+
+    <pre class="install">pip install boostgauge</pre>
+
+    <div class="ctas">
+      <a href="https://github.com/martymcenroe/boostgauge" class="cta">View on GitHub</a>
+      <a href="https://pypi.org/project/boostgauge/" class="cta">View on PyPI</a>
+      <a href="https://github.com/martymcenroe/AssemblyZero" class="cta cta-primary">Built with AssemblyZero &nbsp;&rarr;</a>
+    </div>
+  </main>
+
+  <footer>
+    MIT License &middot; &copy; 2026 Marty McEnroe &middot;
+    <a href="https://github.com/martymcenroe/boostgauge/blob/main/LICENSE">LICENSE</a>
+  </footer>
+</body>
+</html>

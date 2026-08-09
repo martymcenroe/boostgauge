@@ -1,0 +1,10 @@
+{
+  "profile": "default",
+  "claude": {},
+  "assemblyZero": true,
+  "onboard": {
+    "auto": true,
+    "guide": null,
+    "plan": null
+  }
+}
