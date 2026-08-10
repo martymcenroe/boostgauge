@@ -92,7 +92,7 @@ class WindowsCollector(DataCollector):
             "handles": norm_handles,
         }
 
-        driver = max(metrics, key=lambda k: metrics[k])
+        driver = max(metrics.items(), key=lambda x: x[1])[0]
         composite_value = metrics[driver]
 
         return SystemSnapshot(
