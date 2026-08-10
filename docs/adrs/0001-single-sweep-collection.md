@@ -49,8 +49,13 @@ Precisely:
    is hosted by such a process. The previously recommended direct Win32
    enumeration is rejected — it was the second walk #233 caught.
 4. **Handle count** is the sum of `num_handles` across the sweep's rows.
-5. **Unleashed session count** is the number of rows whose `cmdline`
-   matches the unleashed signature.
+5. **Unleashed session count** is the number of rows that are Python
+   interpreter processes (`name` is a Python executable, e.g.
+   `python.exe` / `pythonw.exe`, case-insensitive) AND whose `cmdline`
+   matches the unleashed signature (`unleashed-c-*.py`). Both conditions
+   are predicates over the same sweep's rows. A non-Python process
+   carrying the filename in its command line — an editor, a grep, a
+   shell — is not a session (ruling #239, 2026-08-10).
 6. **Non-process metrics are outside the mandate.** System memory comes
    from `psutil.virtual_memory()` — a single direct call that enumerates
    nothing. The mandate governs the process table, not every syscall.
@@ -83,4 +88,6 @@ Precisely:
 
 - #224 — the cadence ruling (drop per-metric frequencies; collect once).
 - #233 / #234 — the gate-caught contradictions this ADR retires.
+- #239 — the session-count predicate ruling (Python interpreter AND
+  cmdline signature, both over the one sweep).
 - `docs/design/0001-test-strategy.md` — test tiers the hooks above land in.
