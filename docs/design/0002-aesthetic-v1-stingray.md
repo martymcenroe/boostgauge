@@ -88,8 +88,10 @@ Per #2 (rendering) consuming #41 (algorithm). Visible only when their `current_p
 | 1 hour | Magenta / purple | Thin, dashed or dotted | Same |
 | All-time | Red (same hue as main needle, distinguishable by thinness) | Thin, solid | Never drops without explicit reset |
 
-- **Z-order:** All four telltale needles render BEHIND the main needle.
+- **Z-order:** All four telltale needles render BEHIND the main needle. Note that front-versus-behind has no pixel consequence except at overlap, so z-order is an implementation convention rather than an acceptance criterion (ruling #232, 2026-08-09).
 - **Translucency:** Approximately 60–70% opacity for the four telltales. They should not compete with the main needle for attention; they should provide peripheral memory.
+- **Proximity opacity (ruling #232, 2026-08-09):** within 3 scale units of the main needle's position, a telltale's opacity ramps linearly from its baseline up to 100%, so the sliver peeking out beside the wider main needle stays legible exactly where translucency would wash it out. Beyond the window, the baseline holds.
+- **Coincidence is occlusion, by design:** when a telltale's peak equals the current value, the narrower telltale sits fully behind the main needle and disappears. That is correct, not a defect: a telltale reports where the peak WAS once the needle falls back, and at coincidence the main needle itself is displaying the peak — the telltale carries no information at that instant. Visibility requirements apply only at non-coincident angles.
 - **Width relative to main needle:** Approximately 40–50%.
 
 ### Pivot / center
