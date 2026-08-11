@@ -34,9 +34,54 @@ Visual-regression baselines in `tests/visual/baselines/` are **self-generated**:
 
 ---
 
+## The numeric render contract (ruling #265, 2026-08-11)
+
+**Every visual acceptance criterion is computed from this section.** The prose subsections below describe intent; these tables carry the values. A test asserting a colour or a position derives it here — nothing is invented, and nothing is measured off the photograph.
+
+This section exists because the spec stage deadlocked six times without it. Where the doc gave a number (`angle(value)`, ruling #255), the drafter wrote real assertions on the first draw; where it gave adjectives ("candy-apple red", "approximately 60–70% opacity"), the same drafter wrote `assert isinstance(img, Image.Image)` — a test that verifies nothing, because inventing a value is forbidden and no value was supplied. Adjectives are not a specification.
+
+### Palette
+
+| Element | Name | RGB | Hex |
+|---|---|---|---|
+| Dial face | matte black | (10, 10, 12) | `#0A0A0C` |
+| Tick marks, numerals, wordmark | white | (255, 255, 255) | `#FFFFFF` |
+| Main needle | candy-apple red | (247, 57, 35) | `#F73923` |
+| Redline band | brick red | (155, 48, 32) | `#9B3020` |
+| Housing chrome — dark stop | — | (130, 132, 127) | `#82847F` |
+| Housing chrome — light stop | — | (236, 233, 224) | `#ECE9E0` |
+
+The dial, white, and chrome values are measured from the canonical photograph. The two reds are set by ruling #228's split, which the photograph predates: it shows a single red for both needle and band, which is exactly the contradiction #228 retired. Telltale needle hues remain as named in §Telltale needles; each renders at the opacity below.
+
+### Layout
+
+All lengths are fractions of the output image's edge length (`size`), so the contract is resolution-independent. **R = dial radius = 0.40 × size**, centred at (0.5 × size, 0.5 × size).
+
+| Quantity | Value |
+|---|---|
+| Dial radius R | 0.40 × size |
+| Redline band | inner 0.80 R, outer 1.00 R (spanning values 60–100 per §Redline arc) |
+| Main needle tip | 0.86 R from centre |
+| Main needle counterweight | 0.18 R opposite the tip |
+| Main needle width | 0.035 R |
+| Telltale needle width | 0.45 × main needle width |
+| Telltale baseline opacity | 65% (alpha 166) — the single value replacing the former 60–70% range |
+| Pivot cap radius | 0.10 R |
+| Major tick | length 0.10 R, width 0.025 R |
+| Minor tick | length 0.05 R, width 0.012 R |
+| Numeral cap height | 0.11 R |
+
+The needle tip at 0.86 R sits inside the band's 0.80–1.00 R span, which is what makes issue #1's value=75 criterion (tip inside the band, distinct from it) renderable and testable.
+
+### How a colour is asserted
+
+A sampled pixel is classified by **nearest palette entry**: compute Euclidean RGB distance to every entry in the table above; the pixel must be closest to its expected entry. "Distinct hues" is retired as a phrase — the needle-tip sample must classify as candy-apple, the band sample as brick, and a render that let them converge fails by classification rather than by judgement. Sample away from edges (at least 2 px inside a feature) so anti-aliasing does not decide the result.
+
+---
+
 ## Decisions, codified
 
-Each subsection lists one visual decision, its value, and its rationale where non-obvious.
+Each subsection lists one visual decision, its value, and its rationale where non-obvious. **Values in this section are descriptive; where a number is needed, the numeric render contract above is authoritative.**
 
 ### Form factor
 
@@ -120,7 +165,7 @@ Per #2 (rendering) consuming #41 (algorithm). Visible only when their `current_p
 
 Code implementing #1 (core gauge renderer) MUST:
 
-1. Produce output indistinguishable from the canonical image at 256×256 px under the test strategy's visual-regression tolerance.
+1. Produce output satisfying the numeric render contract above — the palette RGBs and the layout fractions — at any `size`, verified by doc-derived checks and pinned thereafter by a self-generated baseline (rulings #262, #265). The canonical photograph is never the comparator.
 2. Structure the renderer so swapping skins per #45 requires changing only the skin module, not the application code that calls `render()`.
 3. Use the typography, colors, and proportions specified above. Substitutions are permitted only for typefaces (when Eurostile is unavailable) and only with the substitutes listed in the Numerals section.
 
@@ -128,7 +173,7 @@ Code implementing #1 MUST NOT:
 
 1. Hard-code dial dimensions, colors, or geometry outside of the skin module. The application code must call into the skin's `render()` and consume the resulting `PIL.Image` — it must not know that the v1 skin is "Stingray-shaped."
 2. Add visual elements not specified here. The aesthetic is functional jewelry — every element earned its place. New ornament requires a separate aesthetic doc revision.
-3. Diverge from the canonical image's color palette. The reds, whites, blacks, and chromes are specific; do not let them drift toward modern flat-design defaults.
+3. Diverge from the numeric render contract's palette. The reds, whites, blacks, and chromes are specific values, not a mood; do not let them drift toward modern flat-design defaults.
 
 ## Out of scope
 
