@@ -50,8 +50,16 @@ This section exists because the spec stage deadlocked six times without it. Wher
 | Redline band | brick red | (155, 48, 32) | `#9B3020` |
 | Housing chrome — dark stop | — | (130, 132, 127) | `#82847F` |
 | Housing chrome — light stop | — | (236, 233, 224) | `#ECE9E0` |
+| Telltale — 1 minute | cyan | (59, 215, 240) | `#3BD7F0` |
+| Telltale — 10 minutes | orange | (255, 154, 46) | `#FF9A2E` |
+| Telltale — 1 hour | magenta | (212, 91, 232) | `#D45BE8` |
+| Telltale — all-time | coral red | (255, 110, 122) | `#FF6E7A` |
 
-The dial, white, and chrome values are measured from the canonical photograph. The two reds are set by ruling #228's split, which the photograph predates: it shows a single red for both needle and band, which is exactly the contradiction #228 retired. Telltale needle hues remain as named in §Telltale needles; each renders at the opacity below.
+The dial, white, and chrome values are measured from the canonical photograph. The two main reds are set by ruling #228's split, which the photograph predates: it shows a single red for both needle and band, which is exactly the contradiction #228 retired.
+
+**The all-time telltale is its own colour (ruling #267).** §Telltale needles previously specified it as "the same hue as the main needle, distinguishable by thinness." Under nearest-entry classification that needle is unclassifiable by construction — a sampled pixel cannot be attributed to it or to the main needle — which is the #228 defect reintroduced. Thinness cannot rescue a colour test: a pixel carries no width. Coral red keeps it in the red family, as the permanent high-water mark should be, and makes it unmistakable to a classifier.
+
+**Separation is a property of this table (ruling #267):** no two entries are closer than **85** in Euclidean RGB distance — the tightest pair is 10-minute orange against all-time coral, at ~88 — so anti-aliasing cannot flip a classification. Any future palette edit preserves that floor or the assertion method stops being sound.
 
 ### Layout
 
@@ -70,12 +78,19 @@ All lengths are fractions of the output image's edge length (`size`), so the con
 | Major tick | length 0.10 R, width 0.025 R |
 | Minor tick | length 0.05 R, width 0.012 R |
 | Numeral cap height | 0.11 R |
+| Wordmark cap height | 0.09 R |
+| Wordmark placement | horizontally centred; cap-height band centred 0.55 R below the pivot |
+| Bezel width | 0.13 × size per side |
 
 The needle tip at 0.86 R sits inside the band's 0.80–1.00 R span, which is what makes issue #1's value=75 criterion (tip inside the band, distinct from it) renderable and testable.
 
 ### How a colour is asserted
 
 A sampled pixel is classified by **nearest palette entry**: compute Euclidean RGB distance to every entry in the table above; the pixel must be closest to its expected entry. "Distinct hues" is retired as a phrase — the needle-tip sample must classify as candy-apple, the band sample as brick, and a render that let them converge fails by classification rather than by judgement. Sample away from edges (at least 2 px inside a feature) so anti-aliasing does not decide the result.
+
+**The chrome housing is the one exception**, because it is a gradient rather than a flat fill: a chrome pixel is verified by predicate — achromatic (max channel − min channel ≤ 14) with a channel mean between 127 and 240 — not by nearest entry. Its two table rows are the gradient's stops, not classification targets.
+
+**Optional elements are never asserted.** Where this doc permits but does not require an element — the two detail dots flanking the pivot cap — no test may verify its presence or absence. A test that asserts an optional element is wrong regardless of what the renderer does.
 
 ---
 
@@ -130,10 +145,12 @@ Per #2 (rendering) consuming #41 (algorithm). Visible only when their `current_p
 
 | Window | Color | Style | Position behavior |
 |---|---|---|---|
-| 1 minute | Cyan / light blue | Thin, translucent | Hard-hold within window; drops to next-in-window when peak ages out |
-| 10 minutes | Orange | Thin, translucent | Same |
-| 1 hour | Magenta / purple | Thin, dashed or dotted | Same |
-| All-time | Red (same hue as main needle, distinguishable by thinness) | Thin, solid | Never drops without explicit reset |
+| 1 minute | Cyan (`#3BD7F0`) | Thin, translucent | Hard-hold within window; drops to next-in-window when peak ages out |
+| 10 minutes | Orange (`#FF9A2E`) | Thin, translucent | Same |
+| 1 hour | Magenta (`#D45BE8`) | Thin, dashed or dotted | Same |
+| All-time | Coral red (`#FF6E7A`) — the red family, its own entry (ruling #267) | Thin, solid | Never drops without explicit reset |
+
+The all-time needle was specified here as "the same hue as the main needle, distinguishable by thinness" until ruling #267. That made it unclassifiable — see §The numeric render contract, which carries the values and the reasoning.
 
 - **Z-order:** All four telltale needles render BEHIND the main needle. Note that front-versus-behind has no pixel consequence except at overlap, so z-order is an implementation convention rather than an acceptance criterion (ruling #232, 2026-08-09).
 - **Translucency:** Approximately 60–70% opacity for the four telltales. They should not compete with the main needle for attention; they should provide peripheral memory.
