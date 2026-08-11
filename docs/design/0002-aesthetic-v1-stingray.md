@@ -26,9 +26,11 @@ The visible target for v1:
 
 Image generated 2026-05-11 via Gemini 2.5 Flash Image. Source prompt is preserved in the comment history of #45 and the report at `docs/reports/active/146-implementation-report.md`.
 
-**The image is binding.** Implementation outputs must be indistinguishable from this image within the visual-regression tolerance defined by `0001-test-strategy.md` §3 (pixel-RMS ≤ 1.0/255 against the committed baseline). The image is the human-facing target; the per-test fixtures in `tests/visual/baselines/` are the programmatic comparators. They must not drift apart.
+**The text is binding; the image is inspiration (operator ruling #262, 2026-08-10).** The written sections below are the sole binding specification. The photograph above is reference material — the look the renderer aims for — and is **never a comparator**: no test compares a render against it, no acceptance criterion cites it, and it is never regenerated to track rulings. An AI-generated photograph cannot be regenerated to spec, and a pipeline that depends on that would make every text ruling unlandable — the spec reviewer proved it live by refusing, six runs in a row, to write the photo-comparison test.
 
-> **Revision note (2026-08-09, rulings #228/#229):** the needle and redline colors were split (candy-apple needle, brick band — see §Main needle and §Redline arc) after the pipeline caught the matching-reds contradiction. The canonical image predates the split and still shows matching reds, so **for needle and band color the sections below are binding until the image is regenerated (tracked in #230)**. For every other element the image remains binding as stated. The band's ring-segment geometry already matches the image.
+Visual-regression baselines in `tests/visual/baselines/` are **self-generated**: the first accepted render becomes the baseline via the explicit `pytest --generate-baselines` human-in-the-loop flow (test strategy 0001 §3). Baselines guard future changes against unintended drift from the *accepted render* — never against the photograph.
+
+> **Revision note (2026-08-09, rulings #228/#229; regen-dependency retired 2026-08-10 by ruling #262):** the needle and redline colors were split (candy-apple needle, brick band — see §Main needle and §Redline arc) after the pipeline caught the matching-reds contradiction. The note that stood here made the color sections binding "until the image is regenerated (tracked in #230)". Ruling #262 retired that dependency: the image is never regenerated, #230 is superseded, and the sections below are binding without qualification.
 
 ---
 
