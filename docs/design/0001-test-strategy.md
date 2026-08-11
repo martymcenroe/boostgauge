@@ -61,6 +61,10 @@ Rejected: Option A on flakiness + headless. Option B because the gauge's correct
 
 A test that fails for a missing baseline writes the candidate image to `tests/visual/baselines/{test_id}.png` *only* when invoked with `pytest --generate-baselines`. Otherwise a missing baseline is a hard fail. This forces an explicit human-in-the-loop step for new baselines; drift is impossible without an intentional regeneration command.
 
+**The flag is registered in `tests/conftest.py`** via `pytest_addoption`, and is read with `request.config.getoption("--generate-baselines")`. It is stated here because it was mandated by this section for three months while nothing registered it: `pytest --generate-baselines` exited with "unrecognized arguments", and any test reading the option raised — making every spec that honoured this section unrunnable (ruling #271).
+
+Baselines are **self-generated** from the first accepted render, never compared against the canonical photograph (aesthetic doc ruling #262). They guard against unintended drift from a render a human accepted.
+
 ### How a test fails
 
 Pixel-diff with a tolerance band:
@@ -161,5 +165,12 @@ Every LLD's "Test Plan" section MUST:
 2. State which tiers from §1 apply to the feature.
 3. List the specific test cases (file paths + behavior) for each applicable tier.
 4. Note any overrides of §3 (visual baseline policy) — and the rationale.
+5. **Carry the literal value of every quantity its pass criteria assert** (ruling #270). A pass criterion may cite the doc that binds a value, but it must also carry the value: `"needle pixels classify as candy-apple #F73923 (aesthetic doc §palette)"`, never `"correct color"` or `"per the aesthetic doc"`.
 
-If an LLD's Test Plan does any of (a) skip mentioning this doc, (b) propose `tkinter.Tk()` in tests, (c) propose baseline auto-acceptance — it is rejected without further review.
+If an LLD's Test Plan does any of (a) skip mentioning this doc, (b) propose `tkinter.Tk()` in tests, (c) propose baseline auto-acceptance, (d) state a pass criterion in placeholder words — "correct", "appropriate", "expected", "proper", "as specified", "per the design doc" — where a value belongs — it is rejected without further review.
+
+### Why (d) exists — a pointer is not a value
+
+The spec stage is drafted from the LLD, not from the design docs. An LLD that points at a binding doc instead of quoting its numbers leaves the spec writer with nothing to assert, and the only test it can then write is one that verifies nothing (`assert isinstance(img, Image.Image)`), which the spec reviewer correctly rejects. That deadlock consumed seven spec-stage halts on issue #1 across 2026-08-10/11 — the numbers existed in the aesthetic doc the whole time and never reached the test writer.
+
+The control case, from the same drafts: the needle-angle formula reached the LLD as literal numbers, because the LLD needed them to describe behaviour — and the spec immediately wrote five real assertions on it. Colours and sizes were referenced rather than carried, and produced placeholders.

@@ -49,13 +49,25 @@ those with a stricter GUI-testing contract documented at
 - **Option C** is the canonical GUI testing approach: the renderer produces
   a `PIL.Image`; `tkinter.Tk()` is never instantiated in tests.
 - **Visual regression baselines** under `tests/visual/baselines/` require an
-  explicit `--generate-baselines` flag — no implicit auto-accept.
+  explicit `--generate-baselines` flag — no implicit auto-accept. The flag is
+  registered in `tests/conftest.py` (ruling #271). Baselines are
+  self-generated from the first accepted render; the canonical photograph is
+  inspiration and is never a comparator (ruling #262).
+- **A pass criterion carries values, not pointers** (ruling #270). An LLD's
+  test plan must quote the literal value it asserts —
+  `candy-apple #F73923`, `0.86 R` — even when citing the doc that binds it.
+  The spec stage is drafted from the LLD, not from the design docs, so a
+  criterion reading "correct color" leaves the test writer with nothing to
+  assert and produces a test that verifies nothing.
 
 Per strategy doc §8, an LLD whose Test Plan does any of:
 
 1. skips mentioning `docs/design/0001-test-strategy.md`,
-2. proposes `tkinter.Tk()` in tests, or
-3. proposes baseline auto-acceptance
+2. proposes `tkinter.Tk()` in tests,
+3. proposes baseline auto-acceptance, or
+4. states a pass criterion in placeholder words — "correct", "appropriate",
+   "expected", "proper", "as specified", "per the design doc" — where a value
+   belongs
 
 is **rejected at review without further analysis**. Keep this rule and §8 of
 the strategy doc in sync — if one changes, change the other.
