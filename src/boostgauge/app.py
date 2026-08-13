@@ -11,11 +11,11 @@ from pathlib import Path
 from typing import Any
 
 from boostgauge.config import (
-    get_default_config_path,
+    apply_exit_write,
     get_default_config,
+    get_default_config_path,
     load_config,
     write_full_config,
-    apply_exit_write,
 )
 
 logger = logging.getLogger(__name__)
@@ -76,8 +76,6 @@ def main(args: list[str] | None = None) -> int:
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
-
-    # GUI and main loop would go here.
 
     apply_exit_write(state.config_file_path, state.hand_changed_keys)
     return 0
