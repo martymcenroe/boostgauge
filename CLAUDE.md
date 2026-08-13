@@ -31,7 +31,9 @@ pressure.
 - Tray icon: `pystray`
 - Standalone packaging: `PyInstaller` (`.exe` / `.app`)
 
-**Key modules:**
+**Key modules (planned layout; most do not exist yet):** the file listing on
+disk is authoritative for what exists. This list is the intended architecture;
+a module listed here but absent from disk is an Add, not a Modify.
 
 - `src/boostgauge/app.py` — main entry point
 - `src/boostgauge/gauge.py` — tachometer renderer
