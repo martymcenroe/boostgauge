@@ -225,3 +225,137 @@ def test_req_220(tmp_path):
         json.dump(disk_data, f)
     new_config = apply_threshold_updates(str(config_file), active_config)
     assert new_config["theme"] == "dark"
+
+
+import json
+import os
+import pytest
+from unittest import mock
+from pathlib import Path
+from boostgauge.config import (
+    load_config,
+    apply_threshold_updates,
+    save_session_changes,
+    mitigate_invalid_config,
+)
+
+
+def test_atomic_write_failure_cleans_temp_file(tmp_path):
+    """Lines 85-87, 90: os.replace failure during config write cleans up temp and re-raises."""
+    config_file = tmp_path / "config.json"
+
+    real_replace = os.replace
+
+    def fail_for_config(src, dst):
+        if str(dst) == str(config_file):
+            raise PermissionError("disk full")
+        return real_replace(src, dst)
+
+    with mock.patch("os.replace", side_effect=fail_for_config):
+        with pytest.raises(PermissionError, match="disk full"):
+            load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+
+def test_atomic_write_failure_unlink_also_fails(tmp_path):
+    """Lines 88-89: temp file cleanup also fails after os.replace failure; original exception propagates."""
+    config_file = tmp_path / "config.json"
+
+    real_replace = os.replace
+
+    def fail_for_config(src, dst):
+        if str(dst) == str(config_file):
+            raise PermissionError("disk full")
+        return real_replace(src, dst)
+
+    with mock.patch("os.replace", side_effect=fail_for_config):
+        with mock.patch("os.unlink", side_effect=OSError("unlink blocked")):
+            with pytest.raises(PermissionError, match="disk full"):
+                load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+
+def test_mitigate_invalid_config_removes_old_corrupt_backup(tmp_path):
+    """Line 109: when a .corrupt backup already exists, it is removed before renaming."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text("{bad json")
+    corrupt_backup = Path(str(config_file) + ".corrupt")
+    corrupt_backup.write_text("previous corrupt")
+
+    with pytest.raises(Exception):
+        mitigate_invalid_config(str(config_file))
+
+
+def test_mitigate_invalid_config_remove_old_corrupt_oserror(tmp_path):
+    """Lines 111-112: os.remove on old .corrupt fails with OSError; error is logged."""
+    config_file = tmp_path / "config.json"
+    config_file.write_text("{bad json")
+    corrupt_backup = Path(str(config_file) + ".corrupt")
+    corrupt_backup.write_text("previous corrupt")
+
+    real_remove = os.remove
+
+    def fail_on_corrupt(path):
+        if str(path).endswith(".corrupt"):
+            raise OSError("access denied")
+        return real_remove(path)
+
+    with mock.patch("os.remove", side_effect=fail_on_corrupt):
+        with pytest.raises(Exception):
+            mitigate_invalid_config(str(config_file))
+
+
+def test_apply_threshold_updates_no_disk_changes(tmp_path):
+    """Line 149: returns current_config unchanged when on-disk thresholds match in-memory."""
+    config_file = tmp_path / "config.json"
+    active_config = load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+    result = apply_threshold_updates(str(config_file), active_config)
+    assert result is active_config
+
+
+def test_apply_threshold_updates_corrupt_json_on_disk(tmp_path):
+    """Lines 155-157: JSONDecodeError on reload logs error and returns current_config."""
+    config_file = tmp_path / "config.json"
+    active_config = load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+    config_file.write_text("{{{not json")
+
+    result = apply_threshold_updates(str(config_file), active_config)
+    assert result == active_config
+
+
+def test_apply_threshold_updates_file_deleted(tmp_path):
+    """Lines 155-157: OSError when config file is missing; returns current_config."""
+    config_file = tmp_path / "config.json"
+    active_config = load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+    config_file.unlink()
+
+    result = apply_threshold_updates(str(config_file), active_config)
+    assert result == active_config
+
+
+def test_save_session_changes_corrupt_json(tmp_path):
+    """Lines 177-179: JSONDecodeError reading config prevents save; returns silently."""
+    config_file = tmp_path / "config.json"
+    load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+    config_file.write_text("{{{broken")
+
+    save_session_changes(str(config_file), hand_changed_position=None, hand_changed_size=500)
+
+    # File not overwritten — still contains the broken content
+    assert config_file.read_text() == "{{{broken"
+
+
+def test_save_session_changes_file_deleted(tmp_path):
+    """Lines 177-179: OSError when config file is missing; returns silently without creating file."""
+    config_file = tmp_path / "config.json"
+    load_config(str(config_file), reset_flag=False, cli_overrides={})
+
+    config_file.unlink()
+
+    save_session_changes(
+        str(config_file), hand_changed_position={"x": 50, "y": 50}, hand_changed_size=200
+    )
+
+    assert not config_file.exists()
