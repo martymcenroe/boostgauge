@@ -4,6 +4,7 @@ Issue #7: Feature: configuration file and CLI arguments
 """
 
 import argparse
+import logging
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,6 +17,8 @@ from boostgauge.config import (
     write_full_config,
     apply_exit_write,
 )
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -41,7 +44,7 @@ def update_thresholds_from_file(path: Path, current_state: SessionState) -> None
         if "thresholds" in disk_data:
             current_state.in_memory_config["thresholds"] = disk_data["thresholds"]
     except (FileNotFoundError, ValueError):
-        pass
+        logger.warning("Could not reload thresholds from %s", path)
 
 
 def init_session(args: list[str]) -> SessionState:
@@ -71,6 +74,8 @@ def main(args: list[str] | None = None) -> int:
     except ValueError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 1
+
+    # GUI and main loop would go here.
 
     apply_exit_write(state.config_file_path, state.hand_changed_keys)
     return 0
