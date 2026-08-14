@@ -1,8 +1,8 @@
-import copy
 import json
 import logging
 import os
 import tempfile
+from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Optional, TypedDict
 
@@ -77,9 +77,9 @@ DEFAULT_CONFIG: AppConfig = {
 def _atomic_write(path: str, data: dict) -> None:
     dest = Path(path)
     dest.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent))
+    tmp_fd, tmp_path = tempfile.mkstemp(dir=str(dest.parent))
     try:
-        with os.fdopen(fd, "w") as f:
+        with os.fdopen(tmp_fd, "w") as f:
             json.dump(data, f, indent=2)
         os.replace(tmp_path, path)
     except Exception:
@@ -90,79 +90,74 @@ def _atomic_write(path: str, data: dict) -> None:
         raise
 
 
-def _deep_merge(base: dict, override: dict) -> dict:
-    result = copy.deepcopy(base)
-    for key, value in override.items():
-        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
-            result[key] = _deep_merge(result[key], value)
-        else:
-            result[key] = value
-    return result
-
-
-def mitigate_invalid_config(path: str, raw_data: str) -> None:
+def mitigate_invalid_config(path: str, raw_data: str = "") -> None:
     """Handles and isolates config load failures safely, ensuring fallback to defaults without data loss. Logs ERROR on invalid config."""
     corrupt_path = path + ".corrupt"
-    logger.error("Invalid config at %s, moving to %s and writing defaults", path, corrupt_path)
-    try:
-        if os.path.exists(corrupt_path):
+    if os.path.exists(corrupt_path):
+        try:
             os.remove(corrupt_path)
-        os.replace(path, corrupt_path)
-    except OSError as e:
-        logger.error("Failed to move corrupt config: %s", e)
-    _atomic_write(path, copy.deepcopy(DEFAULT_CONFIG))
+        except OSError as e:
+            logger.error("Failed to remove old corrupt backup %s: %s", corrupt_path, e)
+    os.rename(path, corrupt_path)
+    logger.error("Invalid config at %s, moved to %s", path, corrupt_path)
+    _atomic_write(path, deepcopy(DEFAULT_CONFIG))
     raise ValueError("Invalid JSON")
 
 
 def load_config(path: str, reset_flag: bool, cli_overrides: dict) -> AppConfig:
     """Loads config, handles reset and auto-creation, applies CLI overrides. Logs INFO on read/write."""
-    if reset_flag and os.path.exists(path):
-        _atomic_write(path, copy.deepcopy(DEFAULT_CONFIG))
+    dest = Path(path)
+
+    if reset_flag and dest.exists():
+        _atomic_write(path, deepcopy(DEFAULT_CONFIG))
         logger.info("Reset config written to %s", path)
 
-    if not os.path.exists(path):
-        _atomic_write(path, copy.deepcopy(DEFAULT_CONFIG))
+    if not dest.exists():
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        _atomic_write(path, deepcopy(DEFAULT_CONFIG))
         logger.info("Default config created at %s", path)
 
-    with open(path, "r") as f:
-        raw_data = f.read()
-
+    raw = dest.read_text(encoding="utf-8")
     try:
-        disk_data = json.loads(raw_data)
+        disk_data = json.loads(raw)
     except json.JSONDecodeError:
-        mitigate_invalid_config(path, raw_data)
-        return  # unreachable; mitigate_invalid_config raises
+        mitigate_invalid_config(path, raw)
 
-    logger.info("Config read from %s", path)
-
-    active = _deep_merge(DEFAULT_CONFIG, disk_data)
+    config = deepcopy(DEFAULT_CONFIG)
+    _deep_merge(config, disk_data)
 
     if cli_overrides:
-        active = _deep_merge(active, cli_overrides)
+        config.update(cli_overrides)
 
-    return active
+    logger.info("Config loaded from %s", path)
+    return config
+
+
+def _deep_merge(base: dict, override: dict) -> None:
+    for key, value in override.items():
+        if key in base and isinstance(base[key], dict) and isinstance(value, dict):
+            _deep_merge(base[key], value)
+        else:
+            base[key] = value
 
 
 def apply_threshold_updates(path: str, current_config: AppConfig) -> AppConfig:
     """Re-reads config from disk and applies ONLY threshold updates to current_config. Logs INFO on reload."""
-    if not os.path.exists(path):
-        return current_config
-
     try:
-        with open(path, "r") as f:
-            raw_data = f.read()
-        disk_data = json.loads(raw_data)
+        raw = Path(path).read_text(encoding="utf-8")
+        disk_data = json.loads(raw)
     except (OSError, json.JSONDecodeError) as e:
-        logger.error("Failed to reload config from %s: %s", path, e)
+        logger.error("Failed to reload config for threshold update: %s", e)
         return current_config
 
-    logger.info("Threshold reload from %s", path)
+    disk_thresholds = disk_data.get("thresholds")
+    if disk_thresholds == current_config.get("thresholds"):
+        return current_config
 
-    result = copy.deepcopy(current_config)
-    if "thresholds" in disk_data:
-        result["thresholds"] = copy.deepcopy(disk_data["thresholds"])
-
-    return result
+    updated = deepcopy(current_config)
+    updated["thresholds"] = deepcopy(disk_thresholds)
+    logger.info("Threshold updates applied from %s", path)
+    return updated
 
 
 def save_session_changes(path: str, hand_changed_position: Optional[PositionConfig], hand_changed_size: Optional[int]) -> None:
@@ -171,16 +166,14 @@ def save_session_changes(path: str, hand_changed_position: Optional[PositionConf
         return
 
     try:
-        with open(path, "r") as f:
-            raw_data = f.read()
-        disk_dict = json.loads(raw_data)
+        raw = Path(path).read_text(encoding="utf-8")
+        disk_dict = json.loads(raw)
     except (OSError, json.JSONDecodeError) as e:
-        logger.error("Cannot save session changes, failed to read %s: %s", path, e)
+        logger.error("Failed to read config for session save: %s", e)
         return
 
     if hand_changed_position is not None:
         disk_dict["position"] = hand_changed_position
-
     if hand_changed_size is not None:
         disk_dict["size"] = hand_changed_size
 

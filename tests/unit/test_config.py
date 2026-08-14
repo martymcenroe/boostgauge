@@ -1,7 +1,14 @@
 import json
+import os
 import pytest
+from unittest import mock
 from pathlib import Path
-from boostgauge.config import load_config, apply_threshold_updates, save_session_changes, mitigate_invalid_config
+from boostgauge.config import (
+    load_config,
+    apply_threshold_updates,
+    save_session_changes,
+    mitigate_invalid_config,
+)
 
 
 def test_req_010(tmp_path):
@@ -227,23 +234,9 @@ def test_req_220(tmp_path):
     assert new_config["theme"] == "dark"
 
 
-import json
-import os
-import pytest
-from unittest import mock
-from pathlib import Path
-from boostgauge.config import (
-    load_config,
-    apply_threshold_updates,
-    save_session_changes,
-    mitigate_invalid_config,
-)
-
-
 def test_atomic_write_failure_cleans_temp_file(tmp_path):
     """Lines 85-87, 90: os.replace failure during config write cleans up temp and re-raises."""
     config_file = tmp_path / "config.json"
-
     real_replace = os.replace
 
     def fail_for_config(src, dst):
@@ -259,7 +252,6 @@ def test_atomic_write_failure_cleans_temp_file(tmp_path):
 def test_atomic_write_failure_unlink_also_fails(tmp_path):
     """Lines 88-89: temp file cleanup also fails after os.replace failure; original exception propagates."""
     config_file = tmp_path / "config.json"
-
     real_replace = os.replace
 
     def fail_for_config(src, dst):
@@ -343,7 +335,6 @@ def test_save_session_changes_corrupt_json(tmp_path):
 
     save_session_changes(str(config_file), hand_changed_position=None, hand_changed_size=500)
 
-    # File not overwritten — still contains the broken content
     assert config_file.read_text() == "{{{broken"
 
 
