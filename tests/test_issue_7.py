@@ -283,3 +283,100 @@ def test_req_22(tmp_path):
     
     update_thresholds_from_file(config_path, state)
     assert state.in_memory_config["telltale_windows"]["short"] == 60
+
+
+import os
+from pathlib import Path
+import json
+import pytest
+from boostgauge.config import get_default_config, write_full_config, load_config, apply_exit_write, get_default_config_path
+
+
+def test_config_path_windows_with_appdata(monkeypatch):
+    """Cover lines 25-26: Windows with APPDATA returns APPDATA/boostgauge/config.json."""
+    monkeypatch.setattr(os, 'name', 'nt')
+    monkeypatch.setenv('APPDATA', r'C:\Users\test\AppData\Roaming')
+    result = get_default_config_path()
+    expected = Path(r'C:\Users\test\AppData\Roaming') / "boostgauge" / "config.json"
+    assert result == expected
+
+
+def test_config_path_non_windows(monkeypatch):
+    """Cover line 27: non-Windows returns ~/.boostgauge/config.json."""
+    monkeypatch.setattr(os, 'name', 'posix')
+    monkeypatch.delenv('APPDATA', raising=False)
+    result = get_default_config_path()
+    assert result == Path.home() / ".boostgauge" / "config.json"
+
+
+def test_config_path_windows_without_appdata(monkeypatch):
+    """Cover line 27: Windows without APPDATA env var falls through to home path."""
+    monkeypatch.setattr(os, 'name', 'nt')
+    monkeypatch.delenv('APPDATA', raising=False)
+    result = get_default_config_path()
+    assert result == Path.home() / ".boostgauge" / "config.json"
+
+
+def test_load_config_file_not_found(tmp_path):
+    """Cover line 53: load_config raises FileNotFoundError for missing file."""
+    missing = tmp_path / "nonexistent.json"
+    with pytest.raises(FileNotFoundError, match="Config file not found"):
+        load_config(missing)
+
+
+def test_load_config_json_array_not_object(tmp_path):
+    """Cover line 59: load_config raises ValueError when JSON root is an array."""
+    bad = tmp_path / "config.json"
+    bad.write_text('[1, 2, 3]')
+    with pytest.raises(ValueError, match="Config must be a JSON object"):
+        load_config(bad)
+
+
+def test_load_config_json_string_not_object(tmp_path):
+    """Cover line 59: load_config raises ValueError when JSON root is a string."""
+    bad = tmp_path / "config.json"
+    bad.write_text('"just a string"')
+    with pytest.raises(ValueError, match="Config must be a JSON object"):
+        load_config(bad)
+
+
+def test_write_full_config_cleans_tmp_on_serialization_error(tmp_path):
+    """Cover lines 76-77: write_full_config removes temp file and re-raises on error."""
+    config_path = tmp_path / "config.json"
+    write_full_config(config_path, get_default_config())
+    original = config_path.read_text()
+
+    with pytest.raises((TypeError, ValueError)):
+        write_full_config(config_path, {"key": object()})
+
+    # Original file should be untouched (atomic write pattern)
+    assert config_path.read_text() == original
+    # No stale temp files left behind
+    tmp_files = list(tmp_path.glob("*.tmp"))
+    assert tmp_files == []
+
+
+def test_apply_exit_write_missing_file_falls_back_to_defaults(tmp_path):
+    """Cover lines 88-89: apply_exit_write uses defaults when config file is missing."""
+    config_path = tmp_path / "missing_config.json"
+    assert not config_path.exists()
+
+    apply_exit_write(config_path, {"size": 500})
+
+    result = load_config(config_path)
+    defaults = get_default_config()
+    assert result["size"] == 500
+    assert result["thresholds"] == defaults["thresholds"]
+
+
+def test_apply_exit_write_invalid_json_falls_back_to_defaults(tmp_path):
+    """Cover lines 88-89: apply_exit_write uses defaults when config is not a JSON object."""
+    config_path = tmp_path / "config.json"
+    config_path.write_text('[1, 2, 3]')
+
+    apply_exit_write(config_path, {"position": {"x": 50, "y": 50}})
+
+    result = load_config(config_path)
+    defaults = get_default_config()
+    assert result["position"] == {"x": 50, "y": 50}
+    assert result["size"] == defaults["size"]
