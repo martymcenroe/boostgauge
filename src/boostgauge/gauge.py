@@ -7,8 +7,10 @@ from typing import TypedDict
 from PIL import Image
 from boostgauge.skins.stingray import render_skin
 
+
 class SkinConfig(TypedDict):
     skin_name: str
+
 
 def _validate_inputs(value: float, size: int) -> None:
     """Validates bounds of metric value and gauge size."""
@@ -16,6 +18,7 @@ def _validate_inputs(value: float, size: int) -> None:
         raise ValueError(f"Value must be between 0 and 100, got {value}")
     if size < 128:
         raise ValueError(f"Size must be at least 128, got {size}")
+
 
 def render(value: float, telltales: list[float | None], size: int = 256, config: dict = None) -> Image.Image:
     """Orchestrates rendering by delegating to the active skin."""
