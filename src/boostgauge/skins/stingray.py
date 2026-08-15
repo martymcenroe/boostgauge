@@ -6,7 +6,6 @@ Issue #1: Feature: core gauge renderer
 import math
 from PIL import Image, ImageDraw
 
-
 def render_skin(value: float, telltales: list[float | None], size: int) -> Image.Image:
     """Renders the Stingray aesthetic skin."""
     img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
@@ -16,6 +15,7 @@ def render_skin(value: float, telltales: list[float | None], size: int) -> Image
     radius = size / 2
 
     draw.ellipse([0, 0, size, size], fill="#111111", outline="#333333", width=2)
+
     for v in range(0, 110, 10):
         t_angle = 225.0 - 2.7 * v
         r_rad = math.radians(t_angle)
@@ -27,13 +27,13 @@ def render_skin(value: float, telltales: list[float | None], size: int) -> Image
             (center_x + math.cos(r_rad) * radius * 0.7 - 5, center_y - math.sin(r_rad) * radius * 0.7 - 5),
             str(v), fill="#FFFFFF"
         )
-    draw.text((center_x - 20, center_y + radius * 0.3), "BOOST", fill="#888888")
 
-    redline_outer = radius * 1.0
+    draw.text((center_x - 20, center_y + radius * 0.3), "BOOST", fill="#888888")
 
     def val_to_angle(v: float) -> float:
         return 225.0 - 2.7 * v
 
+    redline_outer = radius * 1.0
     bbox = [
         center_x - redline_outer, center_y - redline_outer,
         center_x + redline_outer, center_y + redline_outer

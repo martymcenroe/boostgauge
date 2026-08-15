@@ -10,7 +10,6 @@ from boostgauge.gauge import render
 
 
 def test_req_120_visual(request, tmp_path):
-    # Explicit baseline generation (REQ-12) -- expected: --generate-baselines explicitly generates file, no auto-accept
     generate = request.config.getoption("--generate-baselines", False)
     img = render(0, [], 256)
     baseline_path = Path("tests/visual/baselines/baseline_0.png")
