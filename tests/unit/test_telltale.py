@@ -1,11 +1,7 @@
-"""Test file for Issue #41.
+"""Unit tests for the pure Telltale peak-hold logic."""
 
-Emitted by AssemblyZero from the implementation spec's Section 10
-test functions. Bodies are the spec's own, verbatim (#2316).
-"""
-
-# TDD: this import fails until the implementation exists (RED phase)
-from boostgauge.telltale import *  # noqa: F401, F403
+import pytest
+from boostgauge.telltale import Telltale
 
 
 def test_req_5_t010_fresh_construction():
