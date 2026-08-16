@@ -10,7 +10,7 @@
 # Environment: $CLAUDE_TOOL_INPUT_FILE_PATH contains the target file path
 # Matched tools: Read, Write, Edit (via settings.json PreToolUse matchers)
 #
-# Incident: 2026-03-09 — career agent wrote API key via Write(.dev.vars),
+# Incident: 2026-03-09 — an agent in a private repo wrote API key via Write(.dev.vars),
 # exposing it in the permission prompt and session transcript.
 
 set -e

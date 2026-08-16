@@ -113,7 +113,7 @@ The `e1528b7` commit removed all `.github/workflows/` because the PAT in use lac
 
 This is the path documented in runbook `docs/runbooks/0927-new-repo-human-checklist.md` in AssemblyZero. Two parts:
 
-1. **Re-run `tools/new_repo_setup.py` in audit mode** to redeploy `auto-reviewer.yml` via the in-process classic PAT (Contents API path; doesn't need fine-grained-PAT `workflow` scope). Or, simpler: copy a known-good `auto-reviewer.yml` from another martymcenroe repo (e.g., `Talos`, `unleashed`) and ship it via Contents API using `tools/_pat_session.classic_pat_session()` per ADR-0216.
+1. **Re-run `tools/new_repo_setup.py` in audit mode** to redeploy `auto-reviewer.yml` via the in-process classic PAT (Contents API path; doesn't need fine-grained-PAT `workflow` scope). Or, simpler: copy a known-good `auto-reviewer.yml` from another martymcenroe repo (e.g., `Talos`) and ship it via Contents API using `tools/_pat_session.classic_pat_session()` per ADR-0216.
 
 2. **Deploy Cerberus secrets:**
 ```bash
