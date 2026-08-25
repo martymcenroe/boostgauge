@@ -259,10 +259,15 @@ def _sample_fracs(values):
                 0.5 - 0.40 * r_frac * math.sin(a))
 
     band_mid = (float(values["band_inner"]) + 1.0) / 2.0
-    bx, by = at(80, band_mid)
+    # Value 75, not 80 (#359): 80 is a major-tick angle and ticks render ON
+    # TOP of the band (the #351 ruling's geometry), so the band-mid radius
+    # lands on white there. 75 carries no major and no minor (minors sit at
+    # +2/+4/+6/+8 per decade) -- the sample measures the band itself. Found
+    # by the gate's own measurement step reading white off the picture.
+    bx, by = at(75, band_mid)
     fx, fy = at(30, 0.50)                       # clear dial face, upper-left
     return [
-        {"name": "band-mid-at-80", "x_frac": bx, "y_frac": by, "expect": "band"},
+        {"name": "band-mid-at-75", "x_frac": bx, "y_frac": by, "expect": "band"},
         {"name": "face-clear-at-30", "x_frac": fx, "y_frac": fy, "expect": "face"},
     ]
 
