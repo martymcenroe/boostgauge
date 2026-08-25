@@ -1,0 +1,12 @@
+{
+  "issues": [331, 332],
+  "renderer_cmd": ["poetry", "run", "python", "tools/visual_contract_render.py"],
+  "contract": "docs/design/0002-aesthetic-v1-stingray.md",
+  "separation_floor": 85,
+  "ruled": {
+    "needle_rgb": [247, 57, 35],
+    "band_rgb": [170, 15, 25],
+    "band_inner": 0.88,
+    "wordmark_y": 0.67
+  }
+}
