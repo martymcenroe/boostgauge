@@ -34,7 +34,7 @@ Settings that matter:
 
 ### 2.1 Machine hygiene — nothing may pop onto the screen
 - Focus Assist ON. Slack/Discord/mail fully quit. Windows Update paused.
-- Scheduled-task flash risk is resolved fleet-wide (comp-environ ADR-0006, 2026-07-27): the flash class — InteractiveToken tasks with console actions — was converted to silent wscript launchers, and the Codex-* tasks are S4U, which cannot draw on the interactive desktop at all. Paranoia check: `tools/verify_converted_tasks.py` in comp-environ.
+- Scheduled-task flash risk is resolved fleet-wide (a private machine-config repo, ADR-0006, 2026-07-27): the flash class — InteractiveToken tasks with console actions — was converted to silent wscript launchers, and the Codex-* tasks are S4U, which cannot draw on the interactive desktop at all. Paranoia check: the task-conversion verifier in that repo.
 - Close other Claude/agent sessions — a solo machine keeps the take stable.
 - **Use a dedicated clean browser profile for scene S3** — no bookmarks, logged-in notification bell off. A GitHub notification can flash a private repo's name onto footage you can never unpublish.
 - 15+ GB free disk for the recording.
