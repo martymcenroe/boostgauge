@@ -7,6 +7,7 @@
     "needle_rgb": [247, 57, 35],
     "band_rgb": [170, 15, 25],
     "band_inner": 0.88,
-    "wordmark_y": 0.67
+    "wordmark_y": 0.67,
+    "needle_tip": 0.86
   }
 }

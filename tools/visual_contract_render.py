@@ -45,6 +45,11 @@ CONTRACT = {
     "hot_rgb":     ([255, 238, 214], "contract (#FFEED6 hot core)", False),
     "band_inner":  (0.88,           "operator ruling 2026-08-25 (thinned from 0.80 R)", True),
     "wordmark_y":  (0.67,           "operator ruling 2026-08-25 (level with 0/100 ticks)", True),
+    # #363: the tip radius is a ruled key so the gate can SURFACE a delta
+    # that amends the 2026-08-25 tip-short-of-band restatement (tip 0.86 R
+    # stays short of the band's 0.88 R inner edge; aesthetic doc + #331's
+    # decision table) instead of silently applying or vaguely gapping it.
+    "needle_tip":  (0.86,           "aesthetic doc 2026-08-25 tip-short-of-band restatement; #331 decision table", True),
     "needle_value": (75.0,          "judging aid position, not a contract value", False),
 }
 
@@ -220,7 +225,7 @@ def add_needle(base, S, cx, cy, R, values):
     value = float(values["needle_value"])
     a = angle(value)
     half = 0.035 * R / 2
-    tip = polar(cx, cy, 0.86 * R, a)
+    tip = polar(cx, cy, float(values["needle_tip"]) * R, a)
 
     body = Image.new("RGBA", (S, S), (0, 0, 0, 0))
     nd = ImageDraw.Draw(body)
