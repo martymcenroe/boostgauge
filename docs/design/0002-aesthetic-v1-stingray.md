@@ -49,7 +49,7 @@ This section exists because the spec stage deadlocked six times without it. Wher
 | Dial face | matte black | (10, 10, 12) | `#0A0A0C` |
 | Tick marks, numerals, wordmark | white | (255, 255, 255) | `#FFFFFF` |
 | Main needle | candy-apple red | (247, 57, 35) | `#F73923` |
-| Redline band | brick red | (155, 48, 32) | `#9B3020` |
+| Redline band | crimson | (170, 15, 25) | `#AA0F19` |
 | Housing chrome — dark stop | — | (130, 132, 127) | `#82847F` |
 | Housing chrome — light stop | — | (236, 233, 224) | `#ECE9E0` |
 | Telltale — 1 minute | cyan | (59, 215, 240) | `#3BD7F0` |
@@ -57,7 +57,7 @@ This section exists because the spec stage deadlocked six times without it. Wher
 | Telltale — 1 hour | magenta | (212, 91, 232) | `#D45BE8` |
 | Telltale — all-time | coral red | (255, 110, 122) | `#FF6E7A` |
 
-The dial, white, and chrome values are measured from the canonical photograph. The two main reds are set by ruling #228's split, which the photograph predates: it shows a single red for both needle and band, which is exactly the contradiction #228 retired.
+The dial, white, and chrome values are measured from the canonical photograph. The two main reds are set by ruling #228's split, which the photograph predates: it shows a single red for both needle and band, which is exactly the contradiction #228 retired. The band's crimson replaced #228's brick by operator ruling 2026-08-25, made against the first contract-faithful render: brick read as brown, not tachometer red. Crimson sits 88 RGB distance from the candy-apple needle — above the floor below — and the palette's tightest pair remains orange/coral at ~88.
 
 **The all-time telltale is its own colour (ruling #267).** §Telltale needles previously specified it as "the same hue as the main needle, distinguishable by thinness." Under nearest-entry classification that needle is unclassifiable by construction — a sampled pixel cannot be attributed to it or to the main needle — which is the #228 defect reintroduced. Thinness cannot rescue a colour test: a pixel carries no width. Coral red keeps it in the red family, as the permanent high-water mark should be, and makes it unmistakable to a classifier.
 
@@ -70,7 +70,7 @@ All lengths are fractions of the output image's edge length (`size`), so the con
 | Quantity | Value |
 |---|---|
 | Dial radius R | 0.40 × size |
-| Redline band | inner 0.80 R, outer 1.00 R (spanning values 60–100 per §Redline arc) |
+| Redline band | inner 0.88 R, outer 1.00 R (spanning values 60–100 per §Redline arc; thinned from 0.80 R by ruling 2026-08-25) |
 | Main needle tip | 0.86 R from centre |
 | Main needle counterweight | 0.18 R opposite the tip |
 | Main needle width | 0.035 R |
@@ -80,11 +80,12 @@ All lengths are fractions of the output image's edge length (`size`), so the con
 | Major tick | length 0.10 R, width 0.025 R |
 | Minor tick | length 0.05 R, width 0.012 R |
 | Numeral cap height | 0.11 R |
+| Numeral ring | numeral centres at 0.72 R from the pivot (ruling 2026-08-25 — previously unspecified; every drafter had to invent it) |
 | Wordmark cap height | 0.09 R |
-| Wordmark placement | horizontally centred; cap-height band centred 0.55 R below the pivot |
+| Wordmark placement | horizontally centred; cap-height band centred 0.67 R below the pivot — level with the 0/100 major ticks (ruling 2026-08-25; was 0.55 R) |
 | Bezel width | 0.13 × size per side |
 
-The needle tip at 0.86 R sits inside the band's 0.80–1.00 R span, which is what makes issue #1's value=75 criterion (tip inside the band, distinct from it) renderable and testable.
+The needle tip at 0.86 R reaches to just short of the band's 0.88 R inner edge (ruling 2026-08-25 thinned the band; the operator approved the render showing exactly this relationship). The #1-era distinctness criterion is restated accordingly: at any value inside 60–100, tip pixels (sampled on the needle axis at ≤ 0.86 R) and band pixels (sampled at 0.90–1.00 R on the same radial) must each classify as their own palette entry — the two reds stay testably distinct without the tip entering the band.
 
 ### Needle luminescence (ruling 2026-08-15, #327)
 
@@ -130,6 +131,34 @@ A sampled pixel is classified by **nearest palette entry**: compute Euclidean RG
 **The chrome housing is an exception**, because it is a mirrored gradient rather than a flat fill: a chrome pixel is verified by predicate — achromatic (max channel − min channel ≤ 14) with a channel mean between 16 and 248 — not by nearest entry. Its two table rows are the gradient's stops, not classification targets. Chrome is sampled at **three or more points spanning the horizon** (§Chrome environment strip), and at least one sample must be dark (mean < 100) and one bright (mean > 200) — the assertion that a horizon EXISTS, which is what separates metal from the grey ramp that reads as plastic (ruling #328; the former mean floor of 127 forbade the dark half of a real reflection).
 
 **Optional elements are never asserted.** Where this doc permits but does not require an element, no test may verify its presence or absence. A test that asserts an optional element is wrong regardless of what the renderer does. (This class is currently empty: the pivot screws, formerly its only member, were promoted to required by ruling #326 and carry their own predicate in §Pivot / center.)
+
+### Radial zones and compositing (ruling 2026-08-25, per #354)
+
+Twelve spec review rounds tripped on the same derivation: what colour survives at a given (radius, angle) once every element has drawn. This section retires the derivation. **A test's expected pixel is read from here, never derived** — a test that cannot cite a row below for its expected colour is wrong by construction.
+
+**Draw order** (later paints over earlier). Static face: housing chrome → bezel-seat shadow → dial face → redline band → tick marks → numerals → wordmark → screws. Dynamic layer above the cached face (#329): telltales → main needle → pivot cap.
+
+**Radial zone table** — the named rings, static face only:
+
+| Radial zone | Occupant | Expected colour at a sample point |
+|---|---|---|
+| 0.00–0.72 R (excluding rows below) | dial face | `#0A0A0C` flat |
+| screw disks: centres ±0.25 R horizontal, radius 0.020 R | screws | `#1A1A1C` |
+| numeral ring: centres 0.72 R, cap height 0.11 R, at majors | numerals | white glyph pixels; `#0A0A0C` between glyphs |
+| wordmark band: centred 0.67 R below pivot, cap height 0.09 R | wordmark | white glyph pixels; `#0A0A0C` beside them |
+| 0.88–1.00 R, values 60–100 | redline band | `#AA0F19` — including BETWEEN ticks in this arc |
+| 0.88–1.00 R, values outside 60–100 | dial face | `#0A0A0C` |
+| major tick strokes: 0.90–1.00 R at multiples of 10, width 0.025 R | ticks (over band or face) | `#FFFFFF` |
+| minor tick strokes: 0.95–1.00 R at even values, width 0.012 R | ticks (over band or face) | `#FFFFFF` |
+| 1.00–1.03 R | bezel-seat shadow | darker than the chrome at 1.10 R (S9 predicate) |
+| beyond ~1.03 R | chrome housing | the #328 predicate, never nearest-entry |
+
+**The canonical worked examples** — the exact cases the review rounds kept getting wrong:
+
+- A between-tick pixel at 0.95 R in the 60–100 arc is **band crimson**, not face black.
+- A between-tick pixel at 0.95 R below value 60 is **face black**.
+- A tick-stroke midpoint is **white** on either background; the stroke predicate's ≥100 threshold clears both (face channel mean ~10, crimson band channel mean 70.0).
+- The needle tip (0.86 R, dynamic layer) never enters the band (0.88 R inner); tip and band are distinguished by same-radial classification, not by overlap.
 
 ---
 
@@ -235,10 +264,10 @@ The all-time needle was specified here as "the same hue as the main needle, dist
 
 ### Redline arc
 
-- **Color:** Brick red — deeper and browner than the main needle's candy-apple red, visibly a different hue at a glance. (Ruling on #228, 2026-08-09. The pre-revision spec said "matching the main needle," which made a needle tip inside the band indistinguishable from it; the pipeline's requirements gate caught the contradiction with #1's distinctness criterion.)
+- **Color:** Crimson (`#AA0F19`) — a saturated tachometer red, visibly a different hue from the main needle's candy-apple at a glance. (Ruling on #228, 2026-08-09, split the two reds; operator ruling 2026-08-25, made against the first contract-faithful render, replaced #228's brick with crimson — brick read as brown, not tachometer red. The 85 separation floor holds: crimson sits 88 from candy-apple.)
 - **Position:** Upper portion of the scale, **starting at 60** and continuing to 100. (The canonical image's redline starts here — deliberately aggressive. A gauge that redlines at 60% communicates "you're already pushing it" before the user is in trouble.)
-- **Form:** A solid ring band occupying approximately the **outer 80%–100% of the dial radius**, spanning scale values 60 to 100. It is a rim band, never a pie segment from the origin — the needle crosses matte black for most of its length and only its tip enters the band. Tick marks in the 60–100 range render on top of the band in white, as in the canonical image.
-- **Distinctness is testable:** at any value inside 60–100 the needle tip lies within the band; a render-tier test samples tip pixels against band pixels and the two reds must differ (per #1's acceptance criteria).
+- **Form:** A solid ring band occupying the **outer 88%–100% of the dial radius** (thinned from 80% by ruling 2026-08-25 — the wide band crowded the numerals), spanning scale values 60 to 100. It is a rim band, never a pie segment from the origin — the needle crosses matte black for its whole length; its tip stops just short of the band's inner edge. Tick marks in the 60–100 range render on top of the band in white, as in the canonical image.
+- **Distinctness is testable:** at any value inside 60–100, tip pixels (≤ 0.86 R on the needle axis) and band pixels (0.90–1.00 R on the same radial) must each classify as their own palette entry (per #1's acceptance criteria, restated by ruling 2026-08-25).
 
 ## What this doc binds
 
