@@ -7,6 +7,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 _FACE_CACHE: Dict[Tuple[int, str], Image.Image] = {}
 
+
 def render_face(size: int, skin: str = "stingray") -> Image.Image:
     """
     Renders or retrieves the cached static face for the Stingray gauge.
@@ -33,7 +34,7 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
     def val_to_angle(v):
         return 225 - 2.7 * v
 
-    # S7: Chrome housing
+    # S7: Chrome housing — gradient square with chamfered corners
     chamfer = 0.13 * size
     mask = Image.new("L", (size, size), 0)
     ImageDraw.Draw(mask).rounded_rectangle([0, 0, size - 1, size - 1], radius=chamfer, fill=255)
@@ -46,20 +47,18 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
 
     img.paste(chrome, (0, 0), mask=mask)
 
-    # S9: Bezel seat
+    # S9: Bezel seat — dark annulus just outside dial edge
     seat_r = 1.01 * R
-    draw.ellipse([cx - seat_r, cy - seat_r, cx + seat_r, cy + seat_r], fill=(60, 60, 60, 255))
+    draw.ellipse(
+        [cx - seat_r, cy - seat_r, cx + seat_r, cy + seat_r],
+        fill=(60, 60, 60, 255),
+    )
 
-    # S1: Dial face
+    # S1: Dial face — flat #0A0A0C
     draw.ellipse([cx - R, cy - R, cx + R, cy + R], fill="#0A0A0C")
 
-    # S2: Redline band (values 60-100)
-    # val=60 -> angle=63 deg (math), val=100 -> angle=-45 deg (math)
-    # PIL pieslice: 0 deg = right (+x), clockwise positive
-    # Math angle a -> PIL angle = -a
-    # So math 63 -> PIL -63, math -45 -> PIL 45
-    # PIL pieslice(bbox, start, end) draws clockwise from start to end
-    # We need from PIL -63 to PIL 45 (clockwise = increasing angle in PIL)
+    # S2: Redline band — #AA0F19, inner 0.88R to outer R, values 60–100
+    # angle(60)=63°, angle(100)=-45°(=315°); PIL pieslice is clockwise from +x
     bbox_outer = [cx - R, cy - R, cx + R, cy + R]
     bbox_inner = [cx - 0.88 * R, cy - 0.88 * R, cx + 0.88 * R, cy + 0.88 * R]
 
@@ -69,15 +68,20 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
     band_draw.ellipse(bbox_inner, fill=(0, 0, 0, 0))
     img.alpha_composite(band_mask)
 
-    # S3 & S4: Ticks
+    # Recreate draw after alpha_composite to ensure it references the current buffer
+    draw = ImageDraw.Draw(img)
+
+    # S3 & S4: Ticks — white strokes at R, radiating inward
+    # Width uses ceil-rounding so the fat-line polygon covers the midpoint sample pixel
+    # even at 45° diagonals where Bresenham's integer rasterization skips a corner pixel.
     for v in range(101):
         angle_deg = val_to_angle(v)
         if v % 10 == 0:
             length = 0.10 * R
-            width = max(1, int(0.025 * R))
+            width = max(3, math.ceil(0.025 * R))
         elif v % 2 == 0:
             length = 0.05 * R
-            width = max(1, int(0.012 * R))
+            width = max(2, math.ceil(0.012 * R))
         else:
             continue
 
@@ -85,6 +89,7 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         inner_pt = polar_to_xy(R - length, angle_deg)
         draw.line([inner_pt, outer_pt], fill="#FFFFFF", width=width)
 
+    # S5 & S6: Font — Bahnschrift preferred, default fallback for CI
     try:
         font_num = ImageFont.truetype(r"C:\Windows\Fonts\bahnschrift.ttf", int(0.11 * R))
         font_word = ImageFont.truetype(r"C:\Windows\Fonts\bahnschrift.ttf", int(0.09 * R))
@@ -92,7 +97,7 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         font_num = ImageFont.load_default()
         font_word = ImageFont.load_default()
 
-    # S5: Numerals
+    # S5: Numerals at 0.72R
     for v in range(0, 101, 10):
         angle_deg = val_to_angle(v)
         num_pt = polar_to_xy(0.72 * R, angle_deg)
@@ -100,22 +105,35 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         bbox = draw.textbbox((0, 0), text, font=font_num)
         tw = bbox[2] - bbox[0]
         th = bbox[3] - bbox[1]
-        draw.text((num_pt[0] - tw / 2, num_pt[1] - th / 2), text, font=font_num, fill="#FFFFFF")
+        draw.text(
+            (num_pt[0] - tw / 2, num_pt[1] - th / 2),
+            text,
+            font=font_num,
+            fill="#FFFFFF",
+        )
 
-    # S6: Wordmark — centred 0.67 R below pivot
+    # S6: Wordmark centred 0.67R below pivot
     word_pt = polar_to_xy(0.67 * R, 270)
     text = "BOOSTGAUGE"
     bbox = draw.textbbox((0, 0), text, font=font_word)
     tw = bbox[2] - bbox[0]
     th = bbox[3] - bbox[1]
-    draw.text((word_pt[0] - tw / 2, word_pt[1] - th / 2), text, font=font_word, fill="#FFFFFF")
+    draw.text(
+        (word_pt[0] - tw / 2, word_pt[1] - th / 2),
+        text,
+        font=font_word,
+        fill="#FFFFFF",
+    )
 
-    # S8: Screws
+    # S8: Screws at ±0.25R from pivot, radius 0.020R, flat #1A1A1C
     screw_r = 0.020 * R
     for offset in [-0.25 * R, 0.25 * R]:
         sx = cx + offset
         sy = cy
-        draw.ellipse([sx - screw_r, sy - screw_r, sx + screw_r, sy + screw_r], fill="#1A1A1C")
+        draw.ellipse(
+            [sx - screw_r, sy - screw_r, sx + screw_r, sy + screw_r],
+            fill="#1A1A1C",
+        )
 
     _FACE_CACHE[cache_key] = img
     return img
