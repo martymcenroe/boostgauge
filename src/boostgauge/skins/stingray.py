@@ -13,6 +13,10 @@ from PIL import Image, ImageDraw, ImageFont
 # Past this point the normal sweep is folded back so the ring returns to bright.
 HORIZON_FRAC = 0.500
 
+BEZEL_R_INNER = 1.035
+BEZEL_R_OUTER = 1.26
+BEZEL_RING_SPAN = BEZEL_R_OUTER - BEZEL_R_INNER
+
 
 def value_to_angle(v: float) -> float:
     """Convert gauge value (0-100) to math angle in degrees."""
@@ -22,9 +26,13 @@ def value_to_angle(v: float) -> float:
 def _sample_fracs(values: dict) -> dict:
     """Compute anchor points ensuring boundaries like 1.26 R are respected."""
     return {
-        "bezel_inner": values.get("r_inner", 1.035),
-        "bezel_outer": values.get("r_outer", 1.26),
+        "bezel_inner": values.get("r_inner", BEZEL_R_INNER),
+        "bezel_outer": values.get("r_outer", BEZEL_R_OUTER),
     }
+
+
+# Legacy public alias — kept so callers that imported sample_fracs directly still work.
+sample_fracs = _sample_fracs
 
 
 def render_face(size: int, values: Optional[dict] = None, ss: int = 3) -> Image.Image:
