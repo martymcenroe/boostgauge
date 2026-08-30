@@ -1,81 +1,127 @@
 """
 Issue #331: static face renderer — bezel, chrome housing, dial, ticks, numerals, wordmark, screws
+Issue #379: chrome bezel ring, environment strip housing, anti-aliased render
 """
 import math
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
+
 from PIL import Image, ImageDraw, ImageFont
 
-_FACE_CACHE: Dict[Tuple[int, str], Image.Image] = {}
+
+def value_to_angle(v: float) -> float:
+    """Convert gauge value (0-100) to math angle in degrees."""
+    return 225 - 2.7 * v
 
 
-def render_face(size: int, skin: str = "stingray") -> Image.Image:
-    """
-    Renders or retrieves the cached static face for the Stingray gauge.
-    Raises ValueError if size is less than 128.
-    """
+def _sample_fracs(values: dict) -> dict:
+    """Compute anchor points ensuring boundaries like 1.26 R are respected."""
+    return {
+        "bezel_inner": values.get("r_inner", 1.035),
+        "bezel_outer": values.get("r_outer", 1.26),
+    }
+
+
+def render_face(size: int, values: Optional[dict] = None, ss: int = 3) -> Image.Image:
+    """Render the Stingray static face with supersampling and Lanczos downscaling.
+    Raises ValueError if size is less than 128."""
     if size < 128:
-        raise ValueError(f"Size {size} must be >= 128")
+        raise ValueError("size must be at least 128")
+    if ss < 1:
+        raise ValueError("supersampling factor must be >= 1")
+    if values is None:
+        values = {}
 
-    cache_key = (size, skin)
-    if cache_key in _FACE_CACHE:
-        return _FACE_CACHE[cache_key]
+    render_size = size * ss
+    R = 0.40 * render_size
+    cx = render_size / 2.0
+    cy = render_size / 2.0
 
-    img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    stops = values.get("stops", [
+        {"t": 0.08, "r": 232, "g": 240, "b": 251},
+        {"t": 0.485, "r": 255, "g": 255, "b": 255},
+        {"t": 0.500, "r": 24, "g": 24, "b": 24},
+        {"t": 0.92, "r": 219, "g": 214, "b": 204},
+    ])
+    lift = values.get("lift", 1.02)
+
+    env_strip = []
+    for y in range(render_size):
+        t = y / max(1, render_size - 1)
+        if 0.485 < t < 0.500:
+            t = 0.500
+        below = [s for s in stops if s["t"] <= t]
+        above = [s for s in stops if s["t"] > t]
+        s0 = below[-1] if below else stops[0]
+        s1 = above[0] if above else stops[-1]
+        frac = (t - s0["t"]) / (s1["t"] - s0["t"]) if s1["t"] > s0["t"] else 0.0
+        r = s0["r"] + (s1["r"] - s0["r"]) * frac
+        g = s0["g"] + (s1["g"] - s0["g"]) * frac
+        b = s0["b"] + (s1["b"] - s0["b"]) * frac
+        color = (
+            int(min(255, r * lift)),
+            int(min(255, g * lift)),
+            int(min(255, b * lift)),
+            255,
+        )
+        env_strip.append(color)
+
+    img = Image.new("RGBA", (render_size, render_size), (0, 0, 0, 0))
+
+    chamfer = 0.13 * render_size
+    mask = Image.new("L", (render_size, render_size), 0)
+    ImageDraw.Draw(mask).rounded_rectangle(
+        [0, 0, render_size - 1, render_size - 1], radius=chamfer, fill=255
+    )
+
+    housing = Image.new("RGBA", (render_size, render_size), (0, 0, 0, 0))
+    housing_draw = ImageDraw.Draw(housing)
+    for y, color in enumerate(env_strip):
+        housing_draw.line([(0, y), (render_size - 1, y)], fill=color)
+    img.paste(housing, (0, 0), mask=mask)
+
+    fracs = _sample_fracs(values)
+    r_inner = fracs.get("bezel_inner", 1.035) * R
+    r_outer = fracs.get("bezel_outer", 1.26) * R
+
+    pixels = img.load()
+    for py in range(render_size):
+        dy = py - cy
+        for px in range(render_size):
+            dx = px - cx
+            dist = math.hypot(dx, dy)
+            if r_inner <= dist <= r_outer:
+                frac = (dist - r_inner) / (r_outer - r_inner)
+                strip_idx = int(frac * (render_size - 1))
+                strip_idx = max(0, min(render_size - 1, strip_idx))
+                pixels[px, py] = env_strip[strip_idx]
+
     draw = ImageDraw.Draw(img)
 
-    R = 0.40 * size
-    cx = size / 2.0
-    cy = size / 2.0
-
-    def polar_to_xy(r, angle_deg):
-        rad = math.radians(angle_deg)
-        return (cx + r * math.cos(rad), cy - r * math.sin(rad))
-
-    def val_to_angle(v):
-        return 225 - 2.7 * v
-
-    # S7: Chrome housing — gradient square with chamfered corners
-    chamfer = 0.13 * size
-    mask = Image.new("L", (size, size), 0)
-    ImageDraw.Draw(mask).rounded_rectangle([0, 0, size - 1, size - 1], radius=chamfer, fill=255)
-
-    chrome = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    chrome_draw = ImageDraw.Draw(chrome)
-    for x in range(size):
-        v = 50 + int((x / size) * 180)
-        chrome_draw.line([(x, 0), (x, size)], fill=(v, v, v, 255))
-
-    img.paste(chrome, (0, 0), mask=mask)
-
-    # S9: Bezel seat — dark annulus just outside dial edge
     seat_r = 1.01 * R
     draw.ellipse(
         [cx - seat_r, cy - seat_r, cx + seat_r, cy + seat_r],
         fill=(60, 60, 60, 255),
     )
 
-    # S1: Dial face — flat #0A0A0C
     draw.ellipse([cx - R, cy - R, cx + R, cy + R], fill="#0A0A0C")
 
-    # S2: Redline band — #AA0F19, inner 0.88R to outer R, values 60–100
-    # angle(60)=63°, angle(100)=-45°(=315°); PIL pieslice is clockwise from +x
     bbox_outer = [cx - R, cy - R, cx + R, cy + R]
     bbox_inner = [cx - 0.88 * R, cy - 0.88 * R, cx + 0.88 * R, cy + 0.88 * R]
 
-    band_mask = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    band_mask = Image.new("RGBA", (render_size, render_size), (0, 0, 0, 0))
     band_draw = ImageDraw.Draw(band_mask)
     band_draw.pieslice(bbox_outer, -63, 45, fill="#AA0F19")
     band_draw.ellipse(bbox_inner, fill=(0, 0, 0, 0))
     img.alpha_composite(band_mask)
 
-    # Recreate draw after alpha_composite to ensure it references the current buffer
     draw = ImageDraw.Draw(img)
 
-    # S3 & S4: Ticks — white strokes at R, radiating inward
-    # Width uses ceil-rounding so the fat-line polygon covers the midpoint sample pixel
-    # even at 45° diagonals where Bresenham's integer rasterization skips a corner pixel.
+    def polar_to_xy(r, angle_deg):
+        rad = math.radians(angle_deg)
+        return (cx + r * math.cos(rad), cy - r * math.sin(rad))
+
     for v in range(101):
-        angle_deg = val_to_angle(v)
+        angle_deg = value_to_angle(v)
         if v % 10 == 0:
             length = 0.10 * R
             width = max(3, math.ceil(0.025 * R))
@@ -89,7 +135,6 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         inner_pt = polar_to_xy(R - length, angle_deg)
         draw.line([inner_pt, outer_pt], fill="#FFFFFF", width=width)
 
-    # S5 & S6: Font — Bahnschrift preferred, default fallback for CI
     try:
         font_num = ImageFont.truetype(r"C:\Windows\Fonts\bahnschrift.ttf", int(0.11 * R))
         font_word = ImageFont.truetype(r"C:\Windows\Fonts\bahnschrift.ttf", int(0.09 * R))
@@ -97,9 +142,8 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         font_num = ImageFont.load_default()
         font_word = ImageFont.load_default()
 
-    # S5: Numerals at 0.72R
     for v in range(0, 101, 10):
-        angle_deg = val_to_angle(v)
+        angle_deg = value_to_angle(v)
         num_pt = polar_to_xy(0.72 * R, angle_deg)
         text = str(v)
         bbox = draw.textbbox((0, 0), text, font=font_num)
@@ -112,7 +156,6 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
             fill="#FFFFFF",
         )
 
-    # S6: Wordmark centred 0.67R below pivot
     word_pt = polar_to_xy(0.67 * R, 270)
     text = "BOOSTGAUGE"
     bbox = draw.textbbox((0, 0), text, font=font_word)
@@ -125,7 +168,6 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
         fill="#FFFFFF",
     )
 
-    # S8: Screws at ±0.25R from pivot, radius 0.020R, flat #1A1A1C
     screw_r = 0.020 * R
     for offset in [-0.25 * R, 0.25 * R]:
         sx = cx + offset
@@ -135,5 +177,7 @@ def render_face(size: int, skin: str = "stingray") -> Image.Image:
             fill="#1A1A1C",
         )
 
-    _FACE_CACHE[cache_key] = img
+    if ss > 1:
+        img = img.resize((size, size), Image.Resampling.LANCZOS)
+
     return img
