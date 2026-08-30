@@ -15,7 +15,7 @@ HORIZON_FRAC = 0.500
 
 BEZEL_R_INNER = 1.035
 BEZEL_R_OUTER = 1.26
-BEZEL_RING_SPAN = 0.225
+BEZEL_RING_SPAN = BEZEL_R_OUTER - BEZEL_R_INNER
 
 
 def value_to_angle(v: float) -> float:

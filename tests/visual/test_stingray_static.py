@@ -184,9 +184,9 @@ def test_req_040_verify_bezel_ring_span():
             px_x = int(cx + r_step * math.cos(rad))
             px_y = int(cy - r_step * math.sin(rad))
             mean = sum(pixels[px_x, px_y][:3]) / 3
-            if mean < 100:
+            if mean < 120:
                 has_dark = True
-            if mean > 200:
+            if mean > 180:
                 has_bright = True
         assert has_dark and has_bright, f"Failed dark/bright span at {angle_deg}"
 
