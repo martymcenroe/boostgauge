@@ -1,11 +1,17 @@
 """
 Issue #331: static face renderer — bezel, chrome housing, dial, ticks, numerals, wordmark, screws
 Issue #379: chrome bezel ring, environment strip housing, anti-aliased render
+Issue #384: fix bezel ring horizon — dark crossing must be bracketed by bright (S10r/S10g)
 """
 import math
 from typing import Dict, Optional, Tuple
 
 from PIL import Image, ImageDraw, ImageFont
+
+
+# The fractional position in the env strip where the dark horizon crossing occurs.
+# Past this point the normal sweep is folded back so the ring returns to bright.
+HORIZON_FRAC = 0.500
 
 
 def value_to_angle(v: float) -> float:
@@ -91,6 +97,12 @@ def render_face(size: int, values: Optional[dict] = None, ss: int = 3) -> Image.
             dist = math.hypot(dx, dy)
             if r_inner <= dist <= r_outer:
                 frac = (dist - r_inner) / (r_outer - r_inner)
+                # Fix #384: fold the normal sweep back past the horizon so the ring
+                # returns to bright after the dark crossing (S10r criterion).
+                # The dark band is bracketed by bright on both the inner and outer sides.
+                if frac > HORIZON_FRAC:
+                    frac = HORIZON_FRAC - (frac - HORIZON_FRAC)
+                    frac = max(0.0, frac)
                 strip_idx = int(frac * (render_size - 1))
                 strip_idx = max(0, min(render_size - 1, strip_idx))
                 pixels[px, py] = env_strip[strip_idx]
