@@ -81,7 +81,7 @@ def render_face(size: int, values: Optional[dict] = None, ss: int = 3) -> Image.
 
     fracs = _sample_fracs(values)
     r_inner = fracs.get("bezel_inner", 1.035) * R
-    r_outer = min(fracs.get("bezel_outer", 1.26) * R, render_size / 2.0)
+    r_outer = fracs.get("bezel_outer", 1.26) * R
 
     pixels = img.load()
     for py in range(render_size):

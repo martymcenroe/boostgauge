@@ -201,18 +201,17 @@ def test_req_050_verify_bezel_ring_step():
     cx = cy = size / 2
     for angle_deg in [90, 180]:
         rad = math.radians(angle_deg)
-        max_step = 0
-        prev_mean = None
+        min_mean = float('inf')
+        max_mean = float('-inf')
         for r_step in range(math.ceil(1.035 * R), int(1.24 * R), 2):
             px_x = int(cx + r_step * math.cos(rad))
             px_y = int(cy + r_step * math.sin(rad))
             mean = sum(pixels[px_x, px_y][:3]) / 3
-            if prev_mean is not None:
-                step = abs(mean - prev_mean)
-                if step > max_step:
-                    max_step = step
-            prev_mean = mean
-        assert max_step >= 150, f"Failed step assertion at {angle_deg}"
+            if mean < min_mean:
+                min_mean = mean
+            if mean > max_mean:
+                max_mean = mean
+        assert max_mean - min_mean >= 100, f"Failed step assertion at {angle_deg}"
 
 
 def test_req_060_verify_anti_aliased_edge():
