@@ -58,13 +58,16 @@ The main needle shows the hottest of the four metrics, each normalized against i
     "handle_count": {"yellow": 30000, "red": 50000}
   },
   "telltale_windows": {"short": 60, "medium": 600, "long": 3600},
+  "calibration": {"mode": "auto", "highs": {}},
   "show_driver_label": true,
   "show_digital_readout": true,
   "show_session_count": true
 }
 ```
 
-The app writes this file at exactly three moments: first run, `--reset-config`, and quit — and at quit it writes only what you changed by hand (position, size), so edits you make to the file while it runs survive. Threshold edits take effect within five seconds without a restart; everything else applies at the next launch. A wrong value is refused with a message that names the key, what was expected, and what it found.
+**What 100 means: as hard as this machine has ever been pushed.** You never type a threshold. Memory has a physical 100 and keeps its 60/80 bands. The three counts — console hosts, processes, handles — calibrate from this machine's own history: red is the highest the machine has reached, yellow is 60 % of it. A fresh install seeds red at 2.5× the first reading, so the needle starts at 40 — normal, with room above. A session that goes higher shows the needle pinned at 100 (true: that *is* the worst it's been) and the next launch has learned. If you know better than the history, right-click → **Mark this as redline** the moment the machine feels like it's choking; **Reset calibration** goes back to learning. `thresholds` in the file is used only in `manual` mode — what Mark writes, or what you type.
+
+The app writes this file at exactly three moments: first run, `--reset-config`, and quit — and at quit it writes only what you changed by hand (position, size) and what the machine learned (calibration highs that rose, or the calibration you marked), so edits you make to the file while it runs survive. Threshold edits take effect within five seconds without a restart; everything else applies at the next launch. A wrong value is refused with a message that names the key, what was expected, and what it found.
 
 ## How it measures
 

@@ -225,6 +225,12 @@ class App:
         for label, handler in self.session.telltales.menu_entries():
             self.menu.add_command(label=label, command=self._after_reset(handler))
         self.menu.add_separator()
+        # #416: what 100 means, set by a click, never by a number
+        self.menu.add_command(label="Mark this as redline",
+                              command=self._after_reset(self.session.mark_redline))
+        self.menu.add_command(label="Reset calibration",
+                              command=self._after_reset(self.session.reset_calibration))
+        self.menu.add_separator()
         self._topmost_var = self.tk.BooleanVar(value=self.topmost)
         self.menu.add_checkbutton(label="Always on top", variable=self._topmost_var,
                                   command=self._toggle_topmost)
