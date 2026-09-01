@@ -67,6 +67,7 @@ class AppConfig(TypedDict):
     position: PositionConfig
     thresholds: ThresholdsConfig
     telltale_windows: TelltaleWindows
+    calibration: dict
     show_driver_label: bool
     show_digital_readout: bool
     show_session_count: bool
@@ -74,6 +75,8 @@ class AppConfig(TypedDict):
 
 THEMES = ("dark", "light", "neon", "classic")
 METRICS = ("conpty", "memory_percent", "process_count", "handle_count")
+COUNT_METRICS = ("conpty", "process_count", "handle_count")   # the metrics calibration governs (#416)
+CALIBRATION_MODES = ("auto", "manual")
 WINDOWS = ("short", "medium", "long")
 
 DEFAULT_CONFIG: AppConfig = {
@@ -90,6 +93,10 @@ DEFAULT_CONFIG: AppConfig = {
         "handle_count": {"yellow": 30000, "red": 50000},
     },
     "telltale_windows": {"short": 60, "medium": 600, "long": 3600},
+    # #416: in "auto" mode the three counts calibrate from this machine's own highs
+    # (red = high, yellow = 0.6 x high); "thresholds" above governs only "manual" mode
+    # and memory_percent, which has a physical 100 and never calibrates.
+    "calibration": {"mode": "auto", "highs": {}},
     "show_driver_label": True,
     "show_digital_readout": True,
     "show_session_count": True,
@@ -150,6 +157,16 @@ def validate(config: dict) -> None:
     for window in WINDOWS:
         v = tw.get(window)
         _expect(_is_number(v) and v > 0, f"telltale_windows.{window}", "a number of seconds > 0", v)
+    cal = config.get("calibration")
+    _expect(isinstance(cal, dict), "calibration", "an object with mode and highs", cal)
+    mode = cal.get("mode")
+    _expect(mode in CALIBRATION_MODES, "calibration.mode", "one of " + ", ".join(CALIBRATION_MODES), mode)
+    highs = cal.get("highs")
+    _expect(isinstance(highs, dict), "calibration.highs", "an object of per-metric highs", highs)
+    for metric, high in highs.items():
+        _expect(metric in COUNT_METRICS, f"calibration.highs.{metric}",
+                "one of " + ", ".join(COUNT_METRICS), metric)
+        _expect(_is_number(high) and high > 0, f"calibration.highs.{metric}", "a number > 0", high)
     for key in ("show_driver_label", "show_digital_readout", "show_session_count"):
         v = config.get(key)
         _expect(isinstance(v, bool), key, "true or false", v)
@@ -269,13 +286,25 @@ def apply_threshold_updates(path, current: AppConfig) -> AppConfig:
 
 
 def save_session_changes(path, hand_changed_position: Optional[PositionConfig] = None,
-                         hand_changed_size: Optional[int] = None) -> bool:
-    """The exit write: patch exactly the hand-changed keys into the file as it is now.
+                         hand_changed_size: Optional[int] = None, *,
+                         learned_highs: Optional[dict] = None,
+                         calibration: Optional[dict] = None,
+                         thresholds: Optional[dict] = None) -> bool:
+    """The exit write: patch exactly the hand-changed and learned keys into the file as it is now.
 
-    Returns True when a write happened. With nothing hand-changed there is no
-    write at all (B1), so the file's bytes are untouched.
+    - ``hand_changed_position`` / ``hand_changed_size`` — #7's two hand-made keys.
+    - ``learned_highs`` — #416: ``calibration.highs.<metric>`` is written only where
+      the session's value exceeds what the file holds (never lowers, never touches
+      a metric it did not learn).
+    - ``calibration`` — #416: the whole object, after Mark / Reset.
+    - ``thresholds`` — #416: the whole object, after Mark.
+
+    Returns True when a write happened. With nothing to write there is no write
+    at all (B1), so the file's bytes are untouched.
     """
-    if hand_changed_position is None and hand_changed_size is None:
+    wants_write = (hand_changed_position is not None or hand_changed_size is not None
+                   or calibration is not None or thresholds is not None or bool(learned_highs))
+    if not wants_write:
         return False
     path = Path(path)
     try:
@@ -286,12 +315,32 @@ def save_session_changes(path, hand_changed_position: Optional[PositionConfig] =
     if disk is None:
         logger.error("config at %s is not valid JSON; exit write skipped", path)
         return False
+
+    changed = False
     if hand_changed_position is not None:
         disk["position"] = dict(hand_changed_position)
+        changed = True
     if hand_changed_size is not None:
         disk["size"] = hand_changed_size
+        changed = True
+    if thresholds is not None:
+        disk["thresholds"] = deepcopy(thresholds)
+        changed = True
+    if calibration is not None:
+        disk["calibration"] = deepcopy(calibration)
+        changed = True
+    if learned_highs:
+        cal = disk.setdefault("calibration", {"mode": "auto", "highs": {}})
+        highs = cal.setdefault("highs", {})
+        for metric, value in learned_highs.items():
+            current = highs.get(metric)
+            if not _is_number(current) or value > current:
+                highs[metric] = value
+                changed = True
+    if not changed:
+        return False
     _atomic_write(path, disk)
-    logger.info("exit write saved hand-made changes to %s", path)
+    logger.info("exit write saved session changes to %s", path)
     return True
 
 

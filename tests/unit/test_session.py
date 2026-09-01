@@ -20,7 +20,14 @@ assert CONFIG["size"] == 300 and CONFIG["telltale_windows"] == DEFAULT_WINDOWS
 
 
 def _snap(ts: float, value: float) -> SystemSnapshot:
-    return SystemSnapshot(timestamp=ts, conpty_count=0, process_count=0, memory_percent=0.0,
+    """A snapshot whose recomputed composite (#416) equals ``value``.
+
+    Counts are zero, so memory drives; ``memory_percent`` is the inverse of
+    ``normalize`` on the 60/80 band. Values used here are chosen so the
+    arithmetic is exact.
+    """
+    memory = value if value <= 60 else 60 + (value - 60) / 2
+    return SystemSnapshot(timestamp=ts, conpty_count=0, process_count=0, memory_percent=memory,
                           handle_count=0, unleashed_sessions=0, driver="memory", composite_value=value)
 
 
@@ -46,9 +53,9 @@ def test_W2_every_sample_reaches_all_four():
 
 def test_W2_session_ingest_fans_out_timestamp_and_value():
     s = Session(dict(CONFIG), "unused.json", renderer=lambda *a: a)
-    s.ingest(_snap(5.0, 66.5))
-    assert s.value == 66.5
-    assert s.telltales.peaks() == [66.5, 66.5, 66.5, 66.5]
+    s.ingest(_snap(5.0, 70.0))
+    assert s.value == 70.0
+    assert s.telltales.peaks() == [70.0, 70.0, 70.0, 70.0]
     # the window arithmetic saw 5.0 as the timestamp: a lower one now raises in #41's contract
     import pytest
     with pytest.raises(ValueError):
@@ -199,9 +206,11 @@ class _Collector(DataCollector):
 
 def test_reread_thresholds_updates_the_running_collector(tmp_path):
     path = tmp_path / "config.json"
-    path.write_text(json.dumps(CONFIG), encoding="utf-8")
+    manual = json.loads(json.dumps(CONFIG))
+    manual["calibration"]["mode"] = "manual"               # #416: typed thresholds govern only manual mode
+    path.write_text(json.dumps(manual), encoding="utf-8")
     collector = _Collector(Thresholds())
-    s = Session(json.loads(json.dumps(CONFIG)), path, collector=collector, renderer=lambda *a: a)
+    s = Session(json.loads(json.dumps(manual)), path, collector=collector, renderer=lambda *a: a)
 
     assert s.reread_thresholds() is False                  # nothing changed on disk
     data = json.loads(path.read_text(encoding="utf-8"))
