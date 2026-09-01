@@ -1,6 +1,6 @@
 [project]
 name = "boostgauge"
-version = "0.7.0"
+version = "0.8.0"
 description = "Real-time system monitor styled like a racing tachometer"
 authors = [
     {name = "Marty McEnroe",email = "opensource@martymcenroe.ai"}
@@ -41,3 +41,6 @@ python_functions = ["test_*"]
 # basenames like test_gauge.py; default prepend mode dies at collection on
 # the first duplicate (#129 — killed pipeline phase 3 three times).
 addopts = "-ra --strict-markers --import-mode=importlib"
+
+[project.scripts]
+boostgauge = "boostgauge.app:main"
