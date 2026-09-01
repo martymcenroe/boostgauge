@@ -42,5 +42,3 @@ python_functions = ["test_*"]
 # the first duplicate (#129 — killed pipeline phase 3 three times).
 addopts = "-ra --strict-markers --import-mode=importlib"
 
-[project.scripts]
-boostgauge = "boostgauge.app:main"
