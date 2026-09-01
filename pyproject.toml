@@ -1,6 +1,6 @@
 [project]
 name = "boostgauge"
-version = "0.2.0"
+version = "0.3.0"
 description = "Real-time system monitor styled like a racing tachometer"
 authors = [
     {name = "Marty McEnroe",email = "opensource@martymcenroe.ai"}
