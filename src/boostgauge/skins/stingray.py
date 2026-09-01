@@ -34,17 +34,6 @@ BAND = (170, 15, 25)         # #AA0F19 crimson — operator ruling 2026-08-25
 SCREW = (26, 26, 28)         # #1A1A1C
 HOT = (255, 238, 214)        # #FFEED6 hot core
 
-TELLTALE_COLORS = (          # dynamic layer (#332), ruling #267 — order 1m, 10m, 1h, all-time
-    (59, 215, 240),          # #3BD7F0 cyan, 1 minute
-    (255, 154, 46),          # #FF9A2E orange, 10 minutes
-    (212, 91, 232),          # #D45BE8 magenta, 1 hour
-    (255, 110, 122),         # #FF6E7A coral red, all-time
-)
-TELLTALE_WIDTH_RATIO = 0.45  # x the main needle's 0.035 R (contract)
-TELLTALE_BASE_ALPHA = 166    # 65% baseline opacity (contract)
-TELLTALE_RAMP_FAR = 3.0      # scale units: baseline holds at and beyond this (rulings #232/#242/#245)
-TELLTALE_RAMP_NEAR = 2.0     # scale units: 100% at and inside this
-
 ENV = [                       # chrome environment strip, ruling #328
     (0.00, (255, 255, 255)),
     (0.18, (196, 214, 238)),
@@ -227,11 +216,10 @@ def render_face_supersampled(size, ss=3, band_rgb=BAND):
     return base, S, cx, cy, R
 
 
-def draw_main_needle(base, S, cx, cy, R, value):
-    """Main needle at ``value`` — bloomed candy-apple body, hot core — over a supersampled face.
+def add_needle(base, S, cx, cy, R, value):
+    """Main needle at ``value`` + chrome pivot cap 0.10R, over a supersampled face.
 
-    Returns a new RGB image; ``base`` is not mutated. The pivot cap is drawn
-    separately by ``draw_pivot_cap`` because it sits above every needle.
+    Returns a new RGB image; ``base`` is not mutated.
     """
     a = angle(value)
     half = 0.035 * R / 2
@@ -254,14 +242,7 @@ def draw_main_needle(base, S, cx, cy, R, value):
     core_passes = [(0.002 * R, 1.00), (0.007 * R, 0.72), (0.022 * R, 0.36)]
     base = ImageChops.add(base, bloom(core, core_passes))
     base = Image.alpha_composite(base.convert("RGBA"), core).convert("RGB")
-    return base
 
-
-def draw_pivot_cap(base, S, cx, cy, R):
-    """Chrome pivot cap, radius 0.10R, drawn LAST — above every needle (#333 ruling).
-
-    Mutates and returns ``base``.
-    """
     pv = ImageDraw.Draw(base)
     pr = 0.10 * R
     pv.ellipse([cx - pr, cy - pr, cx + pr, cy + pr], fill=(58, 60, 60))
@@ -270,89 +251,6 @@ def draw_pivot_cap(base, S, cx, cy, R):
     pv.ellipse([cx - pr * .70, cy - pr * .70, cx + pr * .70, cy + pr * .18],
                fill=(250, 251, 252))
     return base
-
-
-def add_needle(base, S, cx, cy, R, value):
-    """Main needle + pivot cap — the approved render's composition (``facecheck.emit_variants``)."""
-    return draw_pivot_cap(draw_main_needle(base, S, cx, cy, R, value), S, cx, cy, R)
-
-
-# ---- dynamic layer: telltales (#332) ----------------------------------------
-
-
-def telltale_opacity(distance):
-    """Alpha for a telltale whose peak sits ``distance`` scale units from the main needle.
-
-    Baseline 166 at 3 units and beyond, 255 at 2 units and closer, linear in
-    between — evaluated per needle and applied uniformly along its length
-    (rulings #232, #242, #245).
-    """
-    if distance >= TELLTALE_RAMP_FAR:
-        return TELLTALE_BASE_ALPHA
-    if distance <= TELLTALE_RAMP_NEAR:
-        return 255
-    t = (TELLTALE_RAMP_FAR - distance) / (TELLTALE_RAMP_FAR - TELLTALE_RAMP_NEAR)
-    return int(TELLTALE_BASE_ALPHA + (255 - TELLTALE_BASE_ALPHA) * t + 0.5)
-
-
-def draw_telltales(base, S, cx, cy, R, peaks, value):
-    """Four thin flat-alpha needles, drawn before (so behind) the main needle.
-
-    ``peaks``: four values or None in ``TELLTALE_COLORS`` order. A None peak
-    draws nothing (T1). Flat alpha only — no bloom, no hot core: luminescence
-    (#327) belongs to the main needle alone. Returns ``base`` untouched when
-    nothing is drawn, else a new RGB image.
-    """
-    if all(p is None for p in peaks):
-        return base
-    out = base.convert("RGBA")
-    width = max(1, int(TELLTALE_WIDTH_RATIO * 0.035 * R + 0.5))
-    for color, peak in zip(TELLTALE_COLORS, peaks):
-        if peak is None:
-            continue
-        alpha = telltale_opacity(abs(peak - value))
-        layer = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-        ImageDraw.Draw(layer).line([(cx, cy), polar(cx, cy, 0.86 * R, angle(peak))],
-                                   fill=color + (alpha,), width=width)
-        out = Image.alpha_composite(out, layer)
-    return out.convert("RGB")
-
-
-_FACE_CACHE = {}
-
-
-def cached_face(size, ss=3, band_rgb=BAND):
-    """The static face, baked once per (size, ss, band) and reused every refresh (#329)."""
-    key = (size, ss, band_rgb)
-    if key not in _FACE_CACHE:
-        _FACE_CACHE[key] = render_face_supersampled(size, ss=ss, band_rgb=band_rgb)
-    return _FACE_CACHE[key]
-
-
-def _peak_of(telltale):
-    if telltale is None:
-        return None
-    if hasattr(telltale, "current_peak"):
-        return telltale.current_peak()
-    return float(telltale)
-
-
-def render(value, telltales, size, ss=3, band_rgb=BAND):
-    """One refresh: telltales, then the main needle at ``value``, then the pivot cap.
-
-    ``telltales`` holds four entries in 1m / 10m / 1h / all-time order, each a
-    ``Telltale`` (its ``current_peak()`` is read), a plain number, or None.
-    Composited over the cached face and returned at ``size`` px. With four
-    Nones the result is byte-identical to ``render_with_needle``.
-    """
-    peaks = [_peak_of(t) for t in telltales]
-    if len(peaks) != 4:
-        raise ValueError(f"render() takes four telltales (1m, 10m, 1h, all-time), got {len(peaks)}")
-    base, S, cx, cy, R = cached_face(size, ss=ss, band_rgb=band_rgb)
-    img = draw_telltales(base, S, cx, cy, R, peaks, value)
-    img = draw_main_needle(img, S, cx, cy, R, value)
-    img = draw_pivot_cap(img, S, cx, cy, R)
-    return img.resize((size, size), Image.Resampling.LANCZOS)
 
 
 def render_face(size, ss=3, band_rgb=BAND):
@@ -381,19 +279,13 @@ def main(argv=None):
     parser.add_argument("--size", type=int, default=1024, help="output edge in px")
     parser.add_argument("--value", type=float, default=None,
                         help="main-needle value 0-100; omit for the static face")
-    parser.add_argument("--peaks", default=None,
-                        help="four telltale peaks 1m,10m,1h,all — e.g. 10,25,85,100; "
-                             "use - for a slot with no peak")
     parser.add_argument("--out", type=Path, required=True, help="PNG path to write")
     args = parser.parse_args(argv)
 
     if args.value is None:
         img = render_face(args.size)
-    elif args.peaks is None:
-        img = render_with_needle(args.size, args.value)
     else:
-        peaks = [None if p.strip() == "-" else float(p) for p in args.peaks.split(",")]
-        img = render(args.value, peaks, args.size)
+        img = render_with_needle(args.size, args.value)
     args.out.parent.mkdir(parents=True, exist_ok=True)
     img.save(args.out)
     print(args.out)
