@@ -47,7 +47,7 @@ def _build_process_buffer(entries: list[dict]) -> ctypes.Array:
         name = entry.get("name", "")
         if name:
             buf_attr = ctypes.create_unicode_buffer(name)
-            proc.ImageName.Buffer = buf_attr
+            proc.ImageName.Buffer = ctypes.cast(buf_attr, ctypes.c_wchar_p)
             proc.ImageName.Length = len(name) * 2
             proc.ImageName.MaximumLength = (len(name) + 1) * 2
             # Keep reference alive on the proc object to prevent GC

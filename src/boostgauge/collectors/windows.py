@@ -21,7 +21,7 @@ class UNICODE_STRING(ctypes.Structure):
     _fields_ = [
         ("Length", wintypes.USHORT),
         ("MaximumLength", wintypes.USHORT),
-        ("Buffer", wintypes.LPWSTR),
+        ("Buffer", ctypes.POINTER(ctypes.c_wchar)),
     ]
 
 
@@ -86,8 +86,10 @@ class WindowsCollector(DataCollector):
             handle_count += proc.HandleCount
 
             name = ""
-            if proc.ImageName.Buffer:
-                name = proc.ImageName.Buffer.lower()
+            if proc.ImageName.Buffer and proc.ImageName.Length > 0:
+                name = ctypes.wstring_at(
+                    proc.ImageName.Buffer, proc.ImageName.Length // 2
+                ).lower()
 
             if name in ("conhost.exe", "openconsole.exe"):
                 conpty_count += 1

@@ -28,6 +28,15 @@ class SystemSnapshot:
     driver: str
     composite_value: float
 
+    def __post_init__(self) -> None:
+        # Windows APIs return ctypes wchar arrays; coerce to plain str so callers
+        # can store the value in a c_wchar_p field without a TypeError.
+        if not isinstance(self.driver, str):
+            if hasattr(self.driver, "value"):
+                self.driver = self.driver.value or ""
+            else:
+                self.driver = str(self.driver)
+
 
 class DataCollector(ABC):
     def __init__(self, thresholds: dict[str, ThresholdsConfig], poll_interval: float = 2.0):

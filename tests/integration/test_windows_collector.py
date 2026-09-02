@@ -6,8 +6,8 @@ from __future__ import annotations
 
 import pytest
 
-from boostgauge.collectors.windows import WindowsCollector
 from boostgauge.collector import ThresholdsConfig
+from boostgauge.collectors.windows import WindowsCollector
 
 DEFAULT_THRESHOLDS: dict[str, ThresholdsConfig] = {
     "conpty": {"yellow": 2.0, "red": 5.0},
