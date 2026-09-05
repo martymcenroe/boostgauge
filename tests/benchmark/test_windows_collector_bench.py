@@ -7,7 +7,25 @@ import time
 
 import pytest
 
-from boostgauge.collectors.windows import WindowsCollector
+try:
+    import psutil
+except ImportError:
+    psutil = None  # type: ignore
+
+try:
+    from boostgauge.collectors.windows import WindowsCollector
+except Exception:
+    WindowsCollector = None  # type: ignore
+
+
+class DummyCollector:
+    """Minimal no-op collector used by non-Windows tests."""
+
+    def __init__(self, config=None):
+        self.config = config or {}
+
+    def collect(self):
+        return {}
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")

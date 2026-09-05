@@ -8,8 +8,6 @@ from __future__ import annotations
 import ctypes
 import sys
 import time
-from ctypes import wintypes
-
 import psutil
 
 from boostgauge.collector import DataCollector, SystemSnapshot
@@ -19,18 +17,21 @@ STATUS_INFO_LENGTH_MISMATCH = 0xC0000004
 MAX_BUFFER_SIZE = 10 * 1024 * 1024
 
 
+if sys.platform == "win32":
+    from ctypes import wintypes
+    ntdll = ctypes.windll.ntdll
+else:
+    import types as _types
+    wintypes = _types.SimpleNamespace(USHORT=ctypes.c_ushort, ULONG=ctypes.c_ulong)
+    ntdll = None
+
+
 class UNICODE_STRING(ctypes.Structure):
     _fields_ = [
         ("Length", wintypes.USHORT),
         ("MaximumLength", wintypes.USHORT),
         ("Buffer", ctypes.c_void_p),
     ]
-
-
-if sys.platform == "win32":
-    ntdll = ctypes.windll.ntdll
-else:
-    ntdll = None
 
 
 class WindowsCollector(DataCollector):

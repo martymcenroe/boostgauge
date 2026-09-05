@@ -11,6 +11,15 @@ import pytest
 from boostgauge.collectors.windows import WindowsCollector
 
 
+class DummyCollector:
+    """Stub collector for cross-platform unit tests (no Windows APIs called)."""
+
+    def __init__(self, config):
+        if not isinstance(config, dict):
+            raise ValueError("config must be a dict")
+        self.config = config
+
+
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_windows_collector_counts():
     collector = WindowsCollector({})

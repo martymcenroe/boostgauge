@@ -3,7 +3,8 @@
 Issue #4
 """
 import pytest
-from boostgauge.collector import DataCollector, SystemSnapshot
+import psutil
+from boostgauge.collector import DataCollector, SystemSnapshot, WindowsCollector
 
 
 class DummyCollector(DataCollector):

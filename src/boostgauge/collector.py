@@ -97,3 +97,83 @@ class DataCollector(abc.ABC):
                     highest_val = norm
                     driver = metric_name
         return highest_val, driver
+
+
+class WindowsCollector(DataCollector):
+    """Concrete collector that reads live Windows system metrics via psutil."""
+
+    def collect(self) -> SystemSnapshot:
+        import psutil
+
+        process_count = len(psutil.pids())
+        memory_percent = psutil.virtual_memory().percent
+
+        conpty_count = 0
+        handle_count = 0
+        unleashed_sessions = 0
+        for proc in psutil.process_iter(["name", "num_handles"]):
+            try:
+                name = (proc.info["name"] or "").lower()
+                if name in ("conhost.exe", "openconsole.exe"):
+                    conpty_count += 1
+                if "unleashed" in name:
+                    unleashed_sessions += 1
+                handle_count += proc.info["num_handles"] or 0
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        raw_metrics = {
+            "conpty_count": float(conpty_count),
+            "process_count": float(process_count),
+            "memory_percent": memory_percent,
+            "handle_count": float(handle_count),
+            "unleashed_sessions": float(unleashed_sessions),
+        }
+        composite_value, driver = self._compute_composite(raw_metrics)
+
+        return SystemSnapshot(
+            timestamp=time.time(),
+            conpty_count=conpty_count,
+            process_count=process_count,
+            memory_percent=memory_percent,
+            handle_count=handle_count,
+            unleashed_sessions=unleashed_sessions,
+            driver=driver,
+            composite_value=composite_value,
+        )
+
+
+class DummyCollector(DataCollector):
+    """Deterministic collector for tests; returns a fixed snapshot on each call."""
+
+    def __init__(
+        self,
+        thresholds: dict[str, ThresholdBand],
+        poll_interval: float = 2.0,
+        *,
+        snapshot: SystemSnapshot | None = None,
+    ) -> None:
+        super().__init__(thresholds, poll_interval)
+        self._fixed_snapshot = snapshot
+
+    def collect(self) -> SystemSnapshot:
+        if self._fixed_snapshot is not None:
+            return self._fixed_snapshot
+        raw_metrics: dict[str, float] = {
+            "conpty_count": 0.0,
+            "process_count": 0.0,
+            "memory_percent": 0.0,
+            "handle_count": 0.0,
+            "unleashed_sessions": 0.0,
+        }
+        composite_value, driver = self._compute_composite(raw_metrics)
+        return SystemSnapshot(
+            timestamp=time.time(),
+            conpty_count=0,
+            process_count=0,
+            memory_percent=0.0,
+            handle_count=0,
+            unleashed_sessions=0,
+            driver=driver,
+            composite_value=composite_value,
+        )
