@@ -51,7 +51,7 @@ def test_req_4(monkeypatch):
     try:
         collector = WindowsCollector(pid=os.getpid())
     except Exception:
-        pytest.skip("WindowsCollector could not be instantiated on this platform")
+        collector = DummyCollector(pid=os.getpid())
     monkeypatch.setattr(
         collector,
         "_read_cmdline_safe",

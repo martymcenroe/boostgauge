@@ -16,7 +16,7 @@ import ctypes as _ctypes
 
 try:
     NtQuerySystemInformation = _ctypes.windll.ntdll.NtQuerySystemInformation
-except AttributeError:
+except (AttributeError, OSError):
     NtQuerySystemInformation = None
 
 

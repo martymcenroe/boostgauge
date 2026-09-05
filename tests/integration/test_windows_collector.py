@@ -63,16 +63,15 @@ def test_req_3(monkeypatch):
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_4(monkeypatch):
     collector = WindowsCollector({})
-    monkeypatch.setattr(collector, "_read_cmdline_safe", lambda pid: ["C:\\python.exe", "unleashed-c-123.py"], raising=False)
+    monkeypatch.setattr(WindowsCollector, "_read_cmdline_safe", lambda self, pid: ["C:\\python.exe", "unleashed-c-123.py"])
     assert collector._is_unleashed_session("python.exe", 12345)
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_6(monkeypatch):
-    import psutil as _psutil
     def mock_cmdline(*args):
-        raise _psutil.AccessDenied(pid=0)
-    monkeypatch.setattr(_psutil.Process, "cmdline", mock_cmdline)
+        raise psutil.AccessDenied(pid=0)
+    monkeypatch.setattr(psutil.Process, "cmdline", mock_cmdline)
     collector = WindowsCollector({})
     assert collector._read_cmdline_safe(0) == []
 
@@ -86,7 +85,9 @@ def test_req_7(monkeypatch):
         calls.append(1)
         return 0
 
+    import ctypes
     monkeypatch.setattr(_wmod, "NtQuerySystemInformation", mock_query, raising=False)
+    monkeypatch.setattr(ctypes.windll.ntdll, "NtQuerySystemInformation", mock_query, raising=False)
     collector = WindowsCollector({})
     collector.collect()
     assert len(calls) >= 1
@@ -113,7 +114,9 @@ def test_req_8(monkeypatch):
     monkeypatch.setattr("psutil.virtual_memory", lambda: vmem(percent=50.0))
     monkeypatch.setattr("psutil.process_iter", lambda *args, **kwargs: iter([]))
     import boostgauge.collectors.windows as _wmod
+    import ctypes
     monkeypatch.setattr(_wmod, "NtQuerySystemInformation", lambda *a: 0, raising=False)
+    monkeypatch.setattr(ctypes.windll.ntdll, "NtQuerySystemInformation", lambda *a: 0, raising=False)
     collector = WindowsCollector({})
     start = time.process_time()
     for _ in range(8):

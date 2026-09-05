@@ -2,8 +2,11 @@
 
 Issue #4
 """
-import pytest
+import time
+
 import psutil
+import pytest
+
 from boostgauge.collector import DataCollector, SystemSnapshot, WindowsCollector
 
 
@@ -112,7 +115,6 @@ def test_stop_when_not_running():
 
 
 def test_poll_loop_updates_snapshot():
-    import time
     collector = DummyCollector({}, poll_interval=0.01)
     collector.start()
     time.sleep(0.05)
@@ -165,7 +167,6 @@ def test_req_7():
 
 def test_req_8():
     """DummyCollector.collect() is fast enough to meet the per-call budget."""
-    import time
     collector = DummyCollector({})
     start = time.perf_counter()
     for _ in range(8):

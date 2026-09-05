@@ -138,6 +138,18 @@ class WindowsCollector(DataCollector):
                 return True
         return False
 
+    def _compute_composite(self, raw_metrics: dict) -> tuple[float, str]:
+        """Compute composite system load score and identify the primary driver."""
+        scores = {
+            "memory_percent": raw_metrics.get("memory_percent", 0.0),
+            "conpty": raw_metrics.get("conpty", 0.0) * 10.0,
+            "process_count": raw_metrics.get("process_count", 0.0) / 10.0,
+            "handle_count": raw_metrics.get("handle_count", 0.0) / 1000.0,
+        }
+        composite_value = sum(scores.values())
+        driver = max(scores, key=scores.get)
+        return composite_value, driver
+
     def _read_cmdline_safe(self, pid: int) -> list[str]:
         """Safely read command line of a process using psutil."""
         try:
