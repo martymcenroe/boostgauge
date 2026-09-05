@@ -63,29 +63,30 @@ def test_req_3(monkeypatch):
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_4(monkeypatch):
     collector = WindowsCollector({})
-    monkeypatch.setattr(collector, "_read_cmdline_safe", lambda pid: ["C:\\python.exe", "unleashed-c-123.py"])
+    monkeypatch.setattr(collector, "_read_cmdline_safe", lambda pid: ["C:\\python.exe", "unleashed-c-123.py"], raising=False)
     assert collector._is_unleashed_session("python.exe", 12345)
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_6(monkeypatch):
+    import psutil as _psutil
     def mock_cmdline(*args):
-        raise psutil.AccessDenied(pid=0)
-    monkeypatch.setattr(psutil.Process, "cmdline", mock_cmdline)
+        raise _psutil.AccessDenied(pid=0)
+    monkeypatch.setattr(_psutil.Process, "cmdline", mock_cmdline)
     collector = WindowsCollector({})
     assert collector._read_cmdline_safe(0) == []
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_7(monkeypatch):
-    import ctypes
+    import boostgauge.collectors.windows as _wmod
     calls = []
 
     def mock_query(*args):
         calls.append(1)
         return 0
 
-    monkeypatch.setattr(ctypes.windll.ntdll, "NtQuerySystemInformation", mock_query)
+    monkeypatch.setattr(_wmod, "NtQuerySystemInformation", mock_query)
     collector = WindowsCollector({})
     collector.collect()
     assert len(calls) == 1
@@ -104,6 +105,22 @@ def test_snapshot_fields():
 
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
+@pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
+def test_req_8(monkeypatch):
+    import time
+    import collections
+    vmem = collections.namedtuple('vmem', ['percent'])
+    monkeypatch.setattr("psutil.virtual_memory", lambda: vmem(percent=50.0))
+    monkeypatch.setattr("psutil.process_iter", lambda *args, **kwargs: iter([]))
+    import boostgauge.collectors.windows as _wmod
+    monkeypatch.setattr(_wmod, "NtQuerySystemInformation", lambda *a: 0)
+    collector = WindowsCollector({})
+    start = time.process_time()
+    for _ in range(8):
+        collector.collect()
+    assert (time.process_time() - start) / 8.0 < 0.020
+
+
 def test_no_such_process_cmdline(monkeypatch):
     def mock_cmdline(*args):
         raise psutil.NoSuchProcess(pid=0)

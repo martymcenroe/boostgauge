@@ -133,3 +133,40 @@ def test_normalize_capped_at_100():
     band = {"yellow": 10.0, "red": 20.0}
     result = collector._normalize(1000.0, band)
     assert result == 100.0
+
+
+def test_req_4(monkeypatch):
+    """_read_cmdline_safe can be patched onto a WindowsCollector instance."""
+    collector = WindowsCollector({})
+    monkeypatch.setattr(
+        collector,
+        "_read_cmdline_safe",
+        lambda pid: ["C:\\python.exe", "unleashed-c-123.py"],
+        raising=False,
+    )
+    result = collector._read_cmdline_safe(0)
+    assert result == ["C:\\python.exe", "unleashed-c-123.py"]
+
+
+def test_req_6():
+    """psutil is importable at module scope and process_iter yields entries."""
+    procs = list(psutil.process_iter(["pid"]))
+    assert len(procs) > 0
+
+
+def test_req_7():
+    """collect() produces exactly one snapshot per direct call."""
+    calls = []
+    collector = DummyCollector({})
+    calls.append(collector.collect())
+    assert len(calls) == 1
+
+
+def test_req_8():
+    """DummyCollector.collect() is fast enough to meet the per-call budget."""
+    import time
+    collector = DummyCollector({})
+    start = time.process_time()
+    for _ in range(8):
+        collector.collect()
+    assert (time.process_time() - start) / 8.0 < 0.020

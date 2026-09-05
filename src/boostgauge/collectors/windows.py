@@ -142,3 +142,10 @@ class WindowsCollector(DataCollector):
             return psutil.Process(pid).cmdline()
         except (psutil.AccessDenied, psutil.NoSuchProcess):
             return []
+
+    def _read_cmdline_safe(self, pid: int) -> list[str]:
+        """Safely read command line of a process using psutil."""
+        try:
+            return psutil.Process(pid).cmdline()
+        except (psutil.AccessDenied, psutil.NoSuchProcess):
+            return []

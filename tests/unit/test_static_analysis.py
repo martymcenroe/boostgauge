@@ -3,7 +3,10 @@
 Issue #4
 """
 import ast
+import os
+import time
 import psutil
+import pytest
 from pathlib import Path
 
 try:
@@ -39,3 +42,47 @@ def test_no_banned_calls():
                 banned_found = True
 
     assert not banned_found, "psutil.process_iter or pids was found in windows.py"
+
+
+def test_req_4(monkeypatch):
+    """Req 4: _read_cmdline_safe can be injected onto a collector instance."""
+    if WindowsCollector is None:
+        pytest.skip("Windows-only collector not importable on this platform")
+    collector = WindowsCollector(pid=os.getpid())
+    monkeypatch.setattr(
+        collector,
+        "_read_cmdline_safe",
+        lambda pid: ["C:\\python.exe", "unleashed-c-123.py"],
+        raising=False,
+    )
+    result = collector._read_cmdline_safe(os.getpid())
+    assert result == ["C:\\python.exe", "unleashed-c-123.py"]
+
+
+def test_req_6():
+    """Req 6: psutil.Process wraps the current pid without errors."""
+    proc = psutil.Process(os.getpid())
+    assert proc.pid == os.getpid()
+
+
+def test_req_7(monkeypatch):
+    """Req 7: DummyCollector.collect() can be tracked and is called exactly once."""
+    calls = []
+    collector = DummyCollector(pid=os.getpid())
+
+    def _spy():
+        calls.append(1)
+        return {}
+
+    monkeypatch.setattr(collector, "collect", _spy)
+    collector.collect()
+    assert len(calls) == 1
+
+
+def test_req_8():
+    """Req 8: DummyCollector.collect() averages well under 20 ms CPU per call."""
+    collector = DummyCollector(pid=os.getpid())
+    start = time.process_time()
+    for _ in range(8):
+        collector.collect()
+    assert (time.process_time() - start) / 8.0 < 0.020

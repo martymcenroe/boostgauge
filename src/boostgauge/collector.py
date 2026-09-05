@@ -102,6 +102,14 @@ class DataCollector(abc.ABC):
 class WindowsCollector(DataCollector):
     """Concrete collector that reads live Windows system metrics via psutil."""
 
+    def _read_cmdline_safe(self, pid: int) -> list[str]:
+        """Return the command-line argument list for *pid*, or [] on any error."""
+        import psutil
+        try:
+            return psutil.Process(pid).cmdline()
+        except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
+            return []
+
     def collect(self) -> SystemSnapshot:
         import psutil
 
@@ -111,12 +119,14 @@ class WindowsCollector(DataCollector):
         conpty_count = 0
         handle_count = 0
         unleashed_sessions = 0
-        for proc in psutil.process_iter(["name", "num_handles"]):
+        for proc in psutil.process_iter(["name", "num_handles", "pid"]):
             try:
                 name = (proc.info["name"] or "").lower()
                 if name in ("conhost.exe", "openconsole.exe"):
                     conpty_count += 1
-                if "unleashed" in name:
+                cmdline = self._read_cmdline_safe(proc.info["pid"])
+                cmdline_str = " ".join(cmdline).lower()
+                if "unleashed" in name or "unleashed" in cmdline_str:
                     unleashed_sessions += 1
                 handle_count += proc.info["num_handles"] or 0
             except (psutil.NoSuchProcess, psutil.AccessDenied):

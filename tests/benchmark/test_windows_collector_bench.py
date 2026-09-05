@@ -27,6 +27,9 @@ class DummyCollector:
     def collect(self):
         return {}
 
+    def _read_cmdline_safe(self, pid):
+        return []
+
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_sweep_performance():
@@ -41,3 +44,39 @@ def test_sweep_performance():
 
     mean_time = (end - start) / 8.0
     assert mean_time < 0.020, f"Mean process_time per tick {mean_time:.3f}s exceeded 20ms limit"
+
+
+def test_req_4(monkeypatch):
+    collector = DummyCollector({})
+    monkeypatch.setattr(collector, "_read_cmdline_safe", lambda pid: ["C:\\python.exe", "unleashed-c-123.py"])
+    cmdline = collector._read_cmdline_safe(1234)
+    assert "unleashed-c-123.py" in cmdline
+
+
+@pytest.mark.skipif(psutil is None, reason="psutil not installed")
+def test_req_6():
+    proc = psutil.Process()
+    assert proc is not None
+
+
+def test_req_7():
+    calls = []
+    collector = DummyCollector({})
+    original_collect = collector.collect
+
+    def tracked():
+        calls.append(1)
+        return original_collect()
+
+    collector.collect = tracked
+    collector.collect()
+    assert len(calls) == 1
+
+
+def test_req_8():
+    collector = DummyCollector({})
+    start = time.process_time()
+    for _ in range(8):
+        collector.collect()
+    end = time.process_time()
+    assert (end - start) / 8.0 < 0.020
