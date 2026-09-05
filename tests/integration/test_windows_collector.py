@@ -70,7 +70,7 @@ def test_req_6(monkeypatch):
 
 @pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
 def test_req_7(monkeypatch):
-    import ctypes
+    import boostgauge.collectors.windows as _wm
 
     calls = []
 
@@ -78,7 +78,26 @@ def test_req_7(monkeypatch):
         calls.append(1)
         return 0
 
-    monkeypatch.setattr(ctypes.windll.ntdll, "NtQuerySystemInformation", mock_query)
+    monkeypatch.setattr(_wm, "NtQuerySystemInformation", mock_query)
     collector = WindowsCollector({})
     collector.collect()
     assert len(calls) == 1
+
+
+@pytest.mark.skipif(platform.system() != "Windows", reason="Windows only")
+def test_req_8(monkeypatch):
+    import time
+    import collections
+
+    vmem = collections.namedtuple("vmem", ["percent"])
+    monkeypatch.setattr(psutil, "virtual_memory", lambda: vmem(percent=50.0))
+    monkeypatch.setattr(psutil, "process_iter", lambda *a, **kw: iter([]))
+
+    import boostgauge.collectors.windows as _wm
+    monkeypatch.setattr(_wm, "NtQuerySystemInformation", lambda *a: 0)
+
+    collector = WindowsCollector({})
+    start = time.process_time()
+    for _ in range(8):
+        collector.collect()
+    assert (time.process_time() - start) / 8.0 < 0.020

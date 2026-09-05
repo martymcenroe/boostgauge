@@ -53,6 +53,7 @@ class DataCollector(abc.ABC):
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
+        self._callbacks: list = []
 
     def start(self) -> None:
         """Start the background polling thread."""
@@ -69,6 +70,10 @@ class DataCollector(abc.ABC):
         if self._thread is not None and self._thread.is_alive():
             self._thread.join()
 
+    def register_callback(self, cb) -> None:
+        """Register a callable invoked with each new snapshot from the poll loop."""
+        self._callbacks.append(cb)
+
     def get_latest_snapshot(self) -> SystemSnapshot | None:
         """Retrieve the most recent snapshot."""
         return self._latest_snapshot
@@ -78,6 +83,11 @@ class DataCollector(abc.ABC):
             try:
                 snapshot = self.collect()
                 self._latest_snapshot = snapshot
+                for cb in list(self._callbacks):
+                    try:
+                        cb(snapshot)
+                    except Exception:
+                        pass
             except Exception:
                 pass
             self._stop_event.wait(self.poll_interval)
@@ -116,6 +126,19 @@ class DataCollector(abc.ABC):
 class WindowsCollector(DataCollector):
     """Concrete collector that reads live Windows system metrics via psutil."""
 
+    def _get_system_handle_count(self) -> int:
+        """Return system-wide open handle count via NtQuerySystemInformation."""
+        if NtQuerySystemInformation is None:
+            return 0
+        buf_size = 1 << 17  # 128 KB starting point
+        for _ in range(5):
+            buf = (_ctypes.c_byte * buf_size)()
+            ret = NtQuerySystemInformation(16, buf, buf_size, None)
+            if ret == 0:  # STATUS_SUCCESS
+                return _ctypes.c_ulong.from_buffer(buf).value
+            buf_size *= 2
+        return 0
+
     def _is_unleashed_session(self, name: str, pid: int) -> bool:
         """Return True if the process looks like an Unleashed session."""
         if "unleashed" in name:
@@ -135,16 +158,15 @@ class WindowsCollector(DataCollector):
         memory_percent = psutil.virtual_memory().percent
 
         conpty_count = 0
-        handle_count = 0
+        handle_count = self._get_system_handle_count()
         unleashed_sessions = 0
-        for proc in psutil.process_iter(["name", "num_handles", "pid"]):
+        for proc in psutil.process_iter(["name", "pid"]):
             try:
                 name = (proc.info["name"] or "").lower()
                 if name in ("conhost.exe", "openconsole.exe"):
                     conpty_count += 1
                 if self._is_unleashed_session(name, proc.info["pid"]):
                     unleashed_sessions += 1
-                handle_count += proc.info["num_handles"] or 0
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
 

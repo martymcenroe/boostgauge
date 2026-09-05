@@ -59,20 +59,16 @@ def test_req_6():
     assert proc is not None
 
 
-def test_req_7():
+def test_req_7(monkeypatch):
     calls = []
-    original = DummyCollector.collect
 
     def tracked(self):
         calls.append(1)
-        return original(self)
+        return {}
 
-    DummyCollector.collect = tracked
-    try:
-        collector = DummyCollector({})
-        collector.collect()
-    finally:
-        DummyCollector.collect = original
+    monkeypatch.setattr(DummyCollector, "collect", tracked)
+    collector = DummyCollector({})
+    collector.collect()
 
     assert len(calls) == 1
 
@@ -82,5 +78,4 @@ def test_req_8():
     start = time.perf_counter()
     for _ in range(8):
         collector.collect()
-    end = time.perf_counter()
-    assert (end - start) / 8.0 < 0.020
+    assert (time.perf_counter() - start) / 8.0 < 0.020

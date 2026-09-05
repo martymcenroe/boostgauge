@@ -132,9 +132,13 @@ class WindowsCollector(DataCollector):
 
     def _is_unleashed_session(self, pid: int, name: str) -> bool:
         """Determine if process is an unleashed python session."""
-        if "python" not in name:
+        if "python" not in name.lower():
             return False
-        cmdline = self._read_cmdline_safe(pid)
+        if not hasattr(self, "_cmdline_cache"):
+            self._cmdline_cache: dict[int, list[str]] = {}
+        if pid not in self._cmdline_cache:
+            self._cmdline_cache[pid] = self._read_cmdline_safe(pid)
+        cmdline = self._cmdline_cache[pid]
         for arg in cmdline:
             if arg.startswith("unleashed-c-") and arg.endswith(".py"):
                 return True
