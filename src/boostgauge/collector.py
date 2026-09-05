@@ -12,6 +12,14 @@ import time
 from typing import TypedDict
 
 
+import ctypes as _ctypes
+
+try:
+    NtQuerySystemInformation = _ctypes.windll.ntdll.NtQuerySystemInformation
+except AttributeError:
+    NtQuerySystemInformation = None
+
+
 @dataclasses.dataclass
 class SystemSnapshot:
     timestamp: float
@@ -30,11 +38,12 @@ class ThresholdBand(TypedDict):
 
 
 class DataCollector(abc.ABC):
-    def __init__(self, thresholds: dict[str, ThresholdBand], poll_interval: float = 2.0) -> None:
+    def __init__(self, thresholds: dict[str, ThresholdBand], poll_interval: float = 2.0, *, pid: int | None = None) -> None:
         if poll_interval <= 0:
             raise ValueError("poll_interval must be positive")
         self.thresholds = thresholds
         self.poll_interval = poll_interval
+        self.pid = pid
         self._latest_snapshot: SystemSnapshot | None = None
         self._thread: threading.Thread | None = None
         self._stop_event = threading.Event()
@@ -102,6 +111,10 @@ class DataCollector(abc.ABC):
 class WindowsCollector(DataCollector):
     """Concrete collector that reads live Windows system metrics via psutil."""
 
+    def _is_unleashed_session(self, name: str, cmdline_str: str) -> bool:
+        """Return True if the process looks like an Unleashed session."""
+        return "unleashed" in name or "unleashed" in cmdline_str
+
     def _read_cmdline_safe(self, pid: int) -> list[str]:
         """Return the command-line argument list for *pid*, or [] on any error."""
         import psutil
@@ -126,7 +139,7 @@ class WindowsCollector(DataCollector):
                     conpty_count += 1
                 cmdline = self._read_cmdline_safe(proc.info["pid"])
                 cmdline_str = " ".join(cmdline).lower()
-                if "unleashed" in name or "unleashed" in cmdline_str:
+                if self._is_unleashed_session(name, cmdline_str):
                     unleashed_sessions += 1
                 handle_count += proc.info["num_handles"] or 0
             except (psutil.NoSuchProcess, psutil.AccessDenied):

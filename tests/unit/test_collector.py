@@ -137,6 +137,7 @@ def test_normalize_capped_at_100():
 
 def test_req_4(monkeypatch):
     """_read_cmdline_safe can be patched onto a WindowsCollector instance."""
+    monkeypatch.setattr(WindowsCollector, '_is_unleashed_session', lambda self, *a: False, raising=False)
     collector = WindowsCollector({})
     monkeypatch.setattr(
         collector,
@@ -166,7 +167,7 @@ def test_req_8():
     """DummyCollector.collect() is fast enough to meet the per-call budget."""
     import time
     collector = DummyCollector({})
-    start = time.process_time()
+    start = time.perf_counter()
     for _ in range(8):
         collector.collect()
-    assert (time.process_time() - start) / 8.0 < 0.020
+    assert (time.perf_counter() - start) / 8.0 < 0.020

@@ -20,10 +20,12 @@ MAX_BUFFER_SIZE = 10 * 1024 * 1024
 if sys.platform == "win32":
     from ctypes import wintypes
     ntdll = ctypes.windll.ntdll
+    NtQuerySystemInformation = ntdll.NtQuerySystemInformation
 else:
     import types as _types
     wintypes = _types.SimpleNamespace(USHORT=ctypes.c_ushort, ULONG=ctypes.c_ulong)
     ntdll = None
+    NtQuerySystemInformation = None
 
 
 class UNICODE_STRING(ctypes.Structure):
@@ -69,7 +71,7 @@ class WindowsCollector(DataCollector):
         buffer = ctypes.create_string_buffer(size.value)
 
         while True:
-            status = ntdll.NtQuerySystemInformation(
+            status = NtQuerySystemInformation(
                 SystemProcessInformation,
                 ctypes.byref(buffer),
                 size,
@@ -135,13 +137,6 @@ class WindowsCollector(DataCollector):
             if arg.startswith("unleashed-c-") and arg.endswith(".py"):
                 return True
         return False
-
-    def _read_cmdline_safe(self, pid: int) -> list[str]:
-        """Safely read command line of a process using psutil."""
-        try:
-            return psutil.Process(pid).cmdline()
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
-            return []
 
     def _read_cmdline_safe(self, pid: int) -> list[str]:
         """Safely read command line of a process using psutil."""
