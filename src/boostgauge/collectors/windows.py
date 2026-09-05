@@ -70,7 +70,7 @@ class WindowsCollector(DataCollector):
         size = wintypes.ULONG(512 * 1024)
         buffer = ctypes.create_string_buffer(size.value)
 
-        while True:
+        for _ in range(64):
             status = NtQuerySystemInformation(
                 SystemProcessInformation,
                 ctypes.byref(buffer),
@@ -86,6 +86,8 @@ class WindowsCollector(DataCollector):
                 break
             else:
                 return 0, 0, 0, 0
+        else:
+            return 0, 0, 0, 0
 
         process_count = 0
         handle_count = 0
@@ -116,7 +118,7 @@ class WindowsCollector(DataCollector):
                 ctypes.byref(buffer, offset + 80), ctypes.POINTER(ctypes.c_ulonglong)
             ).contents.value
 
-            if self._is_unleashed_session(name, pid):
+            if self._is_unleashed_session(pid, name):
                 unleashed_sessions += 1
 
             next_entry_offset = ctypes.cast(
@@ -128,7 +130,7 @@ class WindowsCollector(DataCollector):
 
         return process_count, handle_count, conpty_count, unleashed_sessions
 
-    def _is_unleashed_session(self, name: str, pid: int) -> bool:
+    def _is_unleashed_session(self, pid: int, name: str) -> bool:
         """Determine if process is an unleashed python session."""
         if "python" not in name:
             return False
@@ -154,5 +156,5 @@ class WindowsCollector(DataCollector):
         """Safely read command line of a process using psutil."""
         try:
             return psutil.Process(pid).cmdline()
-        except (psutil.AccessDenied, psutil.NoSuchProcess):
+        except Exception:
             return []

@@ -142,9 +142,9 @@ def test_req_4(monkeypatch):
     monkeypatch.setattr(WindowsCollector, '_is_unleashed_session', lambda self, *a: False, raising=False)
     collector = WindowsCollector({})
     monkeypatch.setattr(
-        collector,
+        WindowsCollector,
         "_read_cmdline_safe",
-        lambda pid: ["C:\\python.exe", "unleashed-c-123.py"],
+        lambda self, pid: ["C:\\python.exe", "unleashed-c-123.py"],
         raising=False,
     )
     result = collector._read_cmdline_safe(0)
@@ -153,16 +153,16 @@ def test_req_4(monkeypatch):
 
 def test_req_6():
     """psutil is importable at module scope and process_iter yields entries."""
+    import psutil  # noqa: PLC0415
     procs = list(psutil.process_iter(["pid"]))
     assert len(procs) > 0
 
 
 def test_req_7():
     """collect() produces exactly one snapshot per direct call."""
-    calls = []
     collector = DummyCollector({})
-    calls.append(collector.collect())
-    assert len(calls) == 1
+    snapshot = collector.collect()
+    assert snapshot is not None
 
 
 def test_req_8():
@@ -171,4 +171,5 @@ def test_req_8():
     start = time.perf_counter()
     for _ in range(8):
         collector.collect()
-    assert (time.perf_counter() - start) / 8.0 < 0.020
+    elapsed = time.perf_counter() - start
+    assert elapsed / 8.0 < 0.020

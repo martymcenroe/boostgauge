@@ -12,6 +12,11 @@ import time
 from typing import TypedDict
 
 
+try:
+    import psutil
+except ImportError:
+    psutil = None  # type: ignore[assignment]
+
 import ctypes as _ctypes
 
 try:
@@ -111,21 +116,21 @@ class DataCollector(abc.ABC):
 class WindowsCollector(DataCollector):
     """Concrete collector that reads live Windows system metrics via psutil."""
 
-    def _is_unleashed_session(self, name: str, cmdline_str: str) -> bool:
+    def _is_unleashed_session(self, name: str, pid: int) -> bool:
         """Return True if the process looks like an Unleashed session."""
-        return "unleashed" in name or "unleashed" in cmdline_str
+        if "unleashed" in name:
+            return True
+        cmdline_str = " ".join(self._read_cmdline_safe(pid)).lower()
+        return "unleashed" in cmdline_str
 
     def _read_cmdline_safe(self, pid: int) -> list[str]:
         """Return the command-line argument list for *pid*, or [] on any error."""
-        import psutil
         try:
             return psutil.Process(pid).cmdline()
         except (psutil.NoSuchProcess, psutil.AccessDenied, OSError):
             return []
 
     def collect(self) -> SystemSnapshot:
-        import psutil
-
         process_count = len(psutil.pids())
         memory_percent = psutil.virtual_memory().percent
 
@@ -137,9 +142,7 @@ class WindowsCollector(DataCollector):
                 name = (proc.info["name"] or "").lower()
                 if name in ("conhost.exe", "openconsole.exe"):
                     conpty_count += 1
-                cmdline = self._read_cmdline_safe(proc.info["pid"])
-                cmdline_str = " ".join(cmdline).lower()
-                if self._is_unleashed_session(name, cmdline_str):
+                if self._is_unleashed_session(name, proc.info["pid"]):
                     unleashed_sessions += 1
                 handle_count += proc.info["num_handles"] or 0
             except (psutil.NoSuchProcess, psutil.AccessDenied):
