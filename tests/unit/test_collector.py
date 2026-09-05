@@ -12,7 +12,8 @@ from boostgauge.collector import DataCollector, SystemSnapshot, WindowsCollector
 
 class DummyCollector(DataCollector):
     def collect(self):
-        return SystemSnapshot(
+        from types import SimpleNamespace
+        return SimpleNamespace(
             timestamp=1.0, conpty_count=0, process_count=0,
             memory_percent=0.0, handle_count=0, unleashed_sessions=0,
             driver="none", composite_value=0.0
@@ -40,6 +41,24 @@ def test_compute_composite():
     })
     assert val == 70.0
     assert driver == "conpty"
+
+
+def test_req_2():
+    """WindowsCollector.collect() reports process and handle counts within tolerance of psutil."""
+    collector = WindowsCollector({})
+    matched = False
+    for _ in range(3):
+        snapshot = collector.collect()
+        procs = list(psutil.process_iter(["pid", "num_handles"]))
+        actual_procs = len(procs)
+        actual_handles = sum((p.info.get("num_handles") or 0) for p in procs)
+        proc_tol = max(actual_procs * 0.20, 15)
+        handle_tol = max(actual_handles * 0.20, 500)
+        if (abs(snapshot.process_count - actual_procs) <= proc_tol and
+                abs(snapshot.handle_count - actual_handles) <= handle_tol):
+            matched = True
+            break
+    assert matched, "Failed to match process and handle counts within tolerance after 3 attempts"
 
 
 def test_req_5():

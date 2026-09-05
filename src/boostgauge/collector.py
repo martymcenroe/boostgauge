@@ -79,7 +79,7 @@ class DataCollector(abc.ABC):
         return self._latest_snapshot
 
     def _poll_loop(self) -> None:
-        while not self._stop_event.is_set():
+        while True:
             try:
                 snapshot = self.collect()
                 self._latest_snapshot = snapshot
@@ -90,7 +90,8 @@ class DataCollector(abc.ABC):
                         pass
             except Exception:
                 pass
-            self._stop_event.wait(self.poll_interval)
+            if self._stop_event.wait(self.poll_interval):
+                break
 
     @abc.abstractmethod
     def collect(self) -> SystemSnapshot:
@@ -130,13 +131,15 @@ class WindowsCollector(DataCollector):
         """Return system-wide open handle count via NtQuerySystemInformation."""
         if NtQuerySystemInformation is None:
             return 0
-        buf_size = 1 << 17  # 128 KB starting point
-        for _ in range(5):
+        buf_size = 1 << 22  # 4 MB: covers ~170 K handles on 64-bit Windows
+        ret_len = _ctypes.c_ulong(0)
+        for _ in range(8):
             buf = (_ctypes.c_byte * buf_size)()
-            ret = NtQuerySystemInformation(16, buf, buf_size, None)
+            ret = NtQuerySystemInformation(16, buf, buf_size, _ctypes.byref(ret_len))
             if ret == 0:  # STATUS_SUCCESS
                 return _ctypes.c_ulong.from_buffer(buf).value
-            buf_size *= 2
+            needed = ret_len.value
+            buf_size = (needed + 65536) if needed > buf_size else buf_size * 2
         return 0
 
     def _is_unleashed_session(self, name: str, pid: int) -> bool:
@@ -154,13 +157,14 @@ class WindowsCollector(DataCollector):
             return []
 
     def collect(self) -> SystemSnapshot:
-        process_count = len(psutil.pids())
         memory_percent = psutil.virtual_memory().percent
 
         conpty_count = 0
         handle_count = self._get_system_handle_count()
         unleashed_sessions = 0
+        process_count = 0
         for proc in psutil.process_iter(["name", "pid"]):
+            process_count += 1
             try:
                 name = (proc.info["name"] or "").lower()
                 if name in ("conhost.exe", "openconsole.exe"):

@@ -67,7 +67,11 @@ class WindowsCollector(DataCollector):
     def _sweep(self) -> tuple[int, int, int, int]:
         """Call NtQuerySystemInformation and compute metrics in a single pass.
         Returns (process_count, handle_count, conpty_count, unleashed_sessions)."""
-        size = wintypes.ULONG(512 * 1024)
+        if NtQuerySystemInformation is None:
+            return self._sweep_psutil()
+        if not hasattr(self, "_buf_size"):
+            self._buf_size = 512 * 1024
+        size = wintypes.ULONG(self._buf_size)
         buffer = ctypes.create_string_buffer(size.value)
 
         for _ in range(64):
@@ -89,6 +93,7 @@ class WindowsCollector(DataCollector):
         else:
             return 0, 0, 0, 0
 
+        self._buf_size = size.value
         process_count = 0
         handle_count = 0
         conpty_count = 0
@@ -128,6 +133,28 @@ class WindowsCollector(DataCollector):
                 break
             offset += next_entry_offset
 
+        return process_count, handle_count, conpty_count, unleashed_sessions
+
+    def _sweep_psutil(self) -> tuple[int, int, int, int]:
+        """Psutil-based sweep used on non-Windows platforms."""
+        process_count = 0
+        handle_count = 0
+        conpty_count = 0
+        unleashed_sessions = 0
+        try:
+            for proc in psutil.process_iter(["pid", "name"]):
+                try:
+                    process_count += 1
+                    info = proc.info
+                    name = (info.get("name") or "").lower()
+                    if name in ("conhost.exe", "openconsole.exe"):
+                        conpty_count += 1
+                    if self._is_unleashed_session(info["pid"], name):
+                        unleashed_sessions += 1
+                except (psutil.NoSuchProcess, psutil.AccessDenied):
+                    pass
+        except Exception:
+            pass
         return process_count, handle_count, conpty_count, unleashed_sessions
 
     def _is_unleashed_session(self, pid: int, name: str) -> bool:
