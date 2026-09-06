@@ -48,9 +48,7 @@ _PTR_SIZE = ctypes.sizeof(ctypes.c_void_p)
 
 # Fixed offsets within SYSTEM_PROCESS_INFORMATION (64-bit Windows):
 _OFF_NEXT_ENTRY = 0
-_OFF_NUM_THREADS = 4
 _OFF_NAME_LEN = 56           # USHORT — ImageName.Length
-_OFF_NAME_MAXLEN = 58        # USHORT — ImageName.MaximumLength
 _OFF_NAME_BUF = 64           # PVOID (8 bytes on 64-bit)
 _OFF_PID = 64 + _PTR_SIZE + 8
 _OFF_INHERITED = _OFF_PID + _PTR_SIZE
