@@ -8,6 +8,11 @@ import sys
 import time
 from dataclasses import dataclass
 
+try:
+    import psutil
+except ImportError:
+    psutil = None  # type: ignore[assignment]
+
 from boostgauge.collector import (
     DataCollector,
     SystemSnapshot,
