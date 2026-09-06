@@ -91,10 +91,11 @@ def composite(conpty_count: int, memory_percent: float, process_count: int,
     return best_val, best_name
 
 
-def _psutil_cmdline(proc) -> list[str]:
-    """Return the command-line of a psutil Process, or [] on access error."""
+def _psutil_cmdline(pid: int) -> list[str]:
+    """Return the command-line of the process with the given pid, or [] on error."""
     try:
-        return proc.cmdline()
+        import psutil
+        return psutil.Process(pid).cmdline()
     except Exception:
         return []
 
