@@ -8,7 +8,7 @@ test functions. Bodies are the spec's own, verbatim (#2316).
 import psutil
 
 # TDD: this import fails until the implementation exists (RED phase)
-from boostgauge.collector import *  # noqa: F401, F403
+from boostgauge.collector import Band, CollectorThread, ProcessRow, WindowsCollector, _psutil_cmdline, make_collector, normalize  # noqa: F401
 
 
 def test_req_1_conpty_matches(monkeypatch):
