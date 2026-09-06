@@ -26,7 +26,7 @@ class Band:
 class Thresholds:
     """Per-metric bands. Defaults are issue #7's config defaults, verbatim."""
     conpty: Band = Band(yellow=30, red=60)
-    memory_percent: Band = Band(yellow=80.0, red=90.0)
+    memory_percent: Band = Band(yellow=60.0, red=80.0)
     process_count: Band = Band(yellow=200, red=400)
     handle_count: Band = Band(yellow=10000, red=50000)
 
