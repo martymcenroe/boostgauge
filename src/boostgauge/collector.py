@@ -86,6 +86,14 @@ def composite(conpty_count: int, memory_percent: float, process_count: int,
     return best_val, best_name
 
 
+def _psutil_cmdline(proc) -> list[str]:
+    """Return the command-line of a psutil Process, or [] on access error."""
+    try:
+        return proc.cmdline()
+    except Exception:
+        return []
+
+
 class DataCollector:
     """Abstract base for platform collectors."""
 
