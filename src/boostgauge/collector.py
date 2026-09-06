@@ -72,6 +72,11 @@ def composite(conpty_count: int, memory_percent: float, process_count: int,
     Ties resolve to the first metric in the order conpty, memory, processes,
     handle_count.
     """
+    if isinstance(thresholds, dict):
+        thresholds = Thresholds(**{
+            k: Band(**v) if isinstance(v, dict) else v
+            for k, v in thresholds.items()
+        })
     metrics = [
         ("conpty", normalize(float(conpty_count), thresholds.conpty)),
         ("memory_percent", normalize(memory_percent, thresholds.memory_percent)),
