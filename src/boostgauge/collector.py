@@ -110,14 +110,61 @@ class DataCollector:
         raise NotImplementedError
 
 
-from boostgauge.collectors.windows import WindowsCollector
+class WindowsCollector(DataCollector):
+    """Concrete Windows collector. Uses psutil for process/memory/handle data."""
+
+    def collect(self) -> SystemSnapshot:
+        import psutil
+
+        mem = psutil.virtual_memory()
+        memory_percent = mem.percent
+
+        total_handles = 0
+        process_count = 0
+        conpty_count = 0
+        unleashed_sessions = 0
+
+        for proc in psutil.process_iter(['pid', 'name', 'num_handles']):
+            try:
+                info = proc.info
+                name = (info.get('name') or '').lower()
+                handles = info.get('num_handles') or 0
+                total_handles += handles
+                process_count += 1
+                if 'conhost' in name:
+                    conpty_count += 1
+                if 'claude' in name:
+                    unleashed_sessions += 1
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
+        thresholds = self.thresholds or Thresholds(
+            conpty=Band(yellow=5, red=10),
+            memory_percent=Band(yellow=70, red=90),
+            process_count=Band(yellow=200, red=500),
+            handle_count=Band(yellow=50000, red=100000),
+        )
+
+        value, driver = composite(
+            conpty_count, memory_percent, process_count, total_handles, thresholds
+        )
+
+        return SystemSnapshot(
+            timestamp=time.time(),
+            conpty_count=conpty_count,
+            process_count=process_count,
+            memory_percent=memory_percent,
+            handle_count=total_handles,
+            unleashed_sessions=unleashed_sessions,
+            driver=driver,
+            composite_value=value,
+        )
 
 
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     """Platform detection. Windows only for now (#4); Mac/Linux are future."""
     if sys.platform != "win32":
         raise NotImplementedError(f"Platform {sys.platform} not supported")
-    from boostgauge.collectors.windows import WindowsCollector
     return WindowsCollector(thresholds)
 
 
