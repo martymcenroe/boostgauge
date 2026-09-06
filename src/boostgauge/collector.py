@@ -103,6 +103,7 @@ if sys.platform == "win32":
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     """Platform detection. Windows only for now (#4); Mac/Linux are future."""
     if sys.platform == "win32":
+        from boostgauge.collectors.windows import WindowsCollector
         return WindowsCollector(thresholds)
     raise NotImplementedError(f"Platform {sys.platform} not supported")
 

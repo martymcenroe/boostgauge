@@ -17,6 +17,7 @@ from boostgauge.collector import (
     DataCollector,
     SystemSnapshot,
     Thresholds,
+    composite,
 )
 
 __all__ = [
@@ -43,40 +44,17 @@ IS_WINDOWS = sys.platform == "win32"
 
 _ntdll = None
 
-# SYSTEM_PROCESS_INFORMATION fixed header layout (offsets per Windows SDK):
-# NextEntryOffset(I), NumberOfThreads(I), WorkingSetPrivateSize(Q),
-# HardFaultCount(I), NumberOfThreadsHighWatermark(I), CycleTime(Q),
-# CreateTime(Q), UserTime(Q), KernelTime(Q), ImageName.Length(H),
-# ImageName.MaximumLength(H), ImageName.Buffer(P), BasePriority(I),
-# UniqueProcessId(P), InheritedFromUniqueProcessId(P), HandleCount(I),
-# SessionId(I), UniqueProcessKey(P), PeakVirtualSize(Q), VirtualSize(Q),
-# PageFaultCount(I), PeakWorkingSetSize(Q), WorkingSetSize(Q), ...
-#
-# We only need: NextEntryOffset, HandleCount, UniqueProcessId, and the
-# UNICODE_STRING (Length + Buffer pointer) for the image name.
-# Parse field-by-field using known Windows ABI offsets instead of a single
-# Struct to avoid pointer-size alignment surprises between 32/64-bit.
-
 _PTR_SIZE = ctypes.sizeof(ctypes.c_void_p)
 
 # Fixed offsets within SYSTEM_PROCESS_INFORMATION (64-bit Windows):
-_OFF_NEXT_ENTRY = 0          # ULONG  (4 bytes)
-_OFF_NUM_THREADS = 4         # ULONG  (4 bytes)
-# +8 bytes WorkingSetPrivateSize (LARGE_INTEGER)
-# +4 bytes HardFaultCount
-# +4 bytes NumberOfThreadsHighWatermark
-# +8 bytes CycleTime
-# +8 bytes CreateTime
-# +8 bytes UserTime
-# +8 bytes KernelTime  -> total so far: 4+4+8+4+4+8+8+8+8 = 56
-_OFF_NAME_LEN = 56           # USHORT  (2 bytes) — ImageName.Length
-_OFF_NAME_MAXLEN = 58        # USHORT  (2 bytes) — ImageName.MaximumLength
-# +4 bytes padding on 64-bit before the pointer
+_OFF_NEXT_ENTRY = 0
+_OFF_NUM_THREADS = 4
+_OFF_NAME_LEN = 56           # USHORT — ImageName.Length
+_OFF_NAME_MAXLEN = 58        # USHORT — ImageName.MaximumLength
 _OFF_NAME_BUF = 64           # PVOID (8 bytes on 64-bit)
-# after pointer: BasePriority (4), padding (4)
-_OFF_PID = 64 + _PTR_SIZE + 8   # UniqueProcessId (PVOID used as ULONG_PTR)
-_OFF_INHERITED = _OFF_PID + _PTR_SIZE  # InheritedFromUniqueProcessId
-_OFF_HANDLE_COUNT = _OFF_INHERITED + _PTR_SIZE  # ULONG
+_OFF_PID = 64 + _PTR_SIZE + 8
+_OFF_INHERITED = _OFF_PID + _PTR_SIZE
+_OFF_HANDLE_COUNT = _OFF_INHERITED + _PTR_SIZE
 
 
 @dataclass(frozen=True)
@@ -167,7 +145,6 @@ class WindowsCollector(DataCollector):
                 handle_count = struct.unpack_from("<I", buf, base + _OFF_HANDLE_COUNT)[0]
                 name_buf_ptr = struct.unpack_from("<Q", buf, base + _OFF_NAME_BUF)[0]
             else:
-                # 32-bit layout (pointers are 4 bytes; offsets differ slightly)
                 _off_pid_32 = 64 + 4 + 8
                 _off_inherited_32 = _off_pid_32 + 4
                 _off_handle_32 = _off_inherited_32 + 4
@@ -213,7 +190,6 @@ class WindowsCollector(DataCollector):
         memory_percent = _psutil.virtual_memory().percent
 
         if self.thresholds:
-            from boostgauge.collector import composite
             composite_value, driver = composite(
                 conpty_count, memory_percent, process_count, handle_count, self.thresholds
             )
