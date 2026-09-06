@@ -110,12 +110,18 @@ class DataCollector:
         raise NotImplementedError
 
 
+try:
+    from boostgauge.collectors.windows import WindowsCollector  # noqa: F401
+except Exception:
+    WindowsCollector = None  # type: ignore[assignment,misc]
+
+
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     """Platform detection. Windows only for now (#4); Mac/Linux are future."""
     if sys.platform != "win32":
         raise NotImplementedError(f"Platform {sys.platform} not supported")
-    from boostgauge.collectors.windows import WindowsCollector
-    return WindowsCollector(thresholds)
+    from boostgauge.collectors.windows import WindowsCollector as _WC
+    return _WC(thresholds)
 
 
 class CollectorThread(threading.Thread):
