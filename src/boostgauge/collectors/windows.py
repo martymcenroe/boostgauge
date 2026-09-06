@@ -10,12 +10,12 @@ from dataclasses import dataclass
 
 import psutil
 
-from boostgauge.collector import (
-    DataCollector,
-    SystemSnapshot,
-    Thresholds,
-    composite,
-)
+>>>>>>> REPLACE
+
+<<<<<<< SEARCH
+class WindowsCollector(DataCollector):
+=======
+class WindowsCollector:
 
 __all__ = [
     "SYSTEM_PROCESS_INFORMATION",
@@ -204,3 +204,12 @@ class WindowsCollector(DataCollector):
             driver=driver,
             composite_value=composite_value,
         )
+
+
+# Deferred import breaks the circular dependency:
+# collector.py imports WindowsCollector at module level; importing collector.py
+# here (after WindowsCollector is already defined above) lets Python satisfy
+# that reference from the partially-initialised windows module, then we patch
+# the base class in-place so all subsequent MRO / isinstance checks are correct.
+from boostgauge.collector import DataCollector, SystemSnapshot, Thresholds, composite  # noqa: E402
+WindowsCollector.__bases__ = (DataCollector,)
