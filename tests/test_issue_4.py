@@ -4,6 +4,9 @@ Emitted by AssemblyZero from the implementation spec's Section 10
 test functions. Bodies are the spec's own, verbatim (#2316).
 """
 
+# #2887: modules the spec's bodies use without importing them
+import psutil
+
 # TDD: this import fails until the implementation exists (RED phase)
 from boostgauge.collector import *  # noqa: F401, F403
 
