@@ -3,7 +3,10 @@ from __future__ import annotations
 import psutil
 import pytest
 
-from boostgauge.collectors.windows import CONSOLE_HOSTS, WindowsCollector
+import sys
+
+if sys.platform == "win32":
+    from boostgauge.collectors.windows import CONSOLE_HOSTS, WindowsCollector
 
 
 def _psutil_oracle():

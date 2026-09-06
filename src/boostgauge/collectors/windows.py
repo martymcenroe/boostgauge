@@ -186,8 +186,11 @@ class WindowsCollector(DataCollector):
                 if is_unleashed_cmdline(cmdline_args):
                     unleashed_sessions += 1
 
-        import psutil as _psutil
-        memory_percent = _psutil.virtual_memory().percent
+        try:
+            import psutil as _psutil
+            memory_percent = _psutil.virtual_memory().percent
+        except ImportError:
+            memory_percent = 0.0
 
         if self.thresholds:
             composite_value, driver = composite(
