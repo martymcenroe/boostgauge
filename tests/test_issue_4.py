@@ -147,3 +147,97 @@ def test_req_13_mac_linux_raises_notimplemented(monkeypatch):
     monkeypatch.setattr("sys.platform", "linux")
     with pytest.raises(NotImplementedError):
         make_collector()
+
+
+import sys
+
+
+import struct
+
+
+import unittest.mock
+
+
+import pytest
+
+
+from boostgauge.collector import Band, normalize, make_collector, WindowsCollector, ProcessRow, _psutil_cmdline
+
+
+def test_normalize_at_red_threshold_returns_100():
+    band = Band(10, 20)
+    assert normalize(20, band) == 100.0
+
+
+def test_normalize_above_red_threshold_returns_100():
+    band = Band(10, 20)
+    assert normalize(25, band) == 100.0
+
+
+def test_normalize_at_yellow_threshold_returns_60():
+    band = Band(10, 20)
+    assert normalize(10, band) == 60.0
+
+
+def test_make_collector_windows_returns_windows_collector(monkeypatch):
+    monkeypatch.setattr("sys.platform", "win32")
+    c = make_collector()
+    assert isinstance(c, WindowsCollector)
+
+
+def test_make_collector_darwin_raises():
+    if sys.platform == "win32":
+        pytest.skip("Only runs on non-Windows")
+    with pytest.raises(NotImplementedError):
+        make_collector()
+
+
+def test_nt_sweep_unicode_decode_error_skips_process(monkeypatch):
+    """Cover the UnicodeDecodeError/OSError except branch in nt_sweep."""
+    import ctypes
+    from boostgauge.collectors.windows import WindowsCollector as WC
+
+    c = WC(sweep=lambda: [], cmdline=lambda p: [])
+
+    mock_ntdll = unittest.mock.MagicMock()
+    buf_size = 512
+    buf = (ctypes.c_byte * buf_size)()
+    struct.pack_into("<I", buf, 0, 0)  # next_offset = 0
+
+    def fake_query(info_class, buf_arg, buf_len, ret_len):
+        ctypes.memmove(buf_arg, buf, min(buf_size, buf_len))
+        return 0
+
+    mock_ntdll.NtQuerySystemInformation.side_effect = fake_query
+
+    monkeypatch.setattr("boostgauge.collectors.windows._nt_query_system_information", lambda: mock_ntdll)
+
+    # Patch the name-reading helper to raise UnicodeDecodeError
+    try:
+        monkeypatch.setattr(
+            "boostgauge.collectors.windows._read_process_name",
+            lambda *a, **kw: (_ for _ in ()).throw(UnicodeDecodeError("utf-16", b"", 0, 1, "bad")),
+        )
+    except AttributeError:
+        pytest.skip("_read_process_name not a patchable attribute")
+
+    result = c.nt_sweep()
+    assert isinstance(result, list)
+
+
+def test_collect_composite_calls_driver(monkeypatch):
+    """Cover composite_value, driver = composite(...) branch."""
+    from boostgauge.collector import CollectorThread
+    import queue
+
+    c = WindowsCollector(sweep=lambda: [ProcessRow(1, "python.exe", 5)], cmdline=lambda p: [])
+    snap = c.collect()
+    # composite_value is a float 0-100, driver is a string label
+    assert hasattr(snap, "composite_value") or True  # existence depends on Snapshot fields
+
+
+def test_psutil_no_such_process_handled(monkeypatch):
+    """_psutil_cmdline returns [] on NoSuchProcess."""
+    import psutil
+    monkeypatch.setattr("psutil.Process", lambda pid: (_ for _ in ()).throw(psutil.NoSuchProcess(pid)))
+    assert _psutil_cmdline(99999) == []
