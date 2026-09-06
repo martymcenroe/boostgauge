@@ -115,7 +115,7 @@ class WindowsCollector(DataCollector):
                 len(self._buffer),
                 None,
             )
-            if status == STATUS_INFO_LENGTH_MISMATCH:
+            if status in (STATUS_INFO_LENGTH_MISMATCH, STATUS_INFO_LENGTH_MISMATCH & 0xFFFFFFFF):
                 self._buffer = ctypes.create_string_buffer(
                     len(self._buffer) + _GROWTH_SLACK
                 )
