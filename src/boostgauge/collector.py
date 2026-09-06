@@ -110,7 +110,11 @@ class DataCollector:
         raise NotImplementedError
 
 
-from boostgauge.collectors.windows import WindowsCollector
+def __getattr__(attr: str):
+    if attr == "WindowsCollector":
+        from boostgauge.collectors.windows import WindowsCollector
+        return WindowsCollector
+    raise AttributeError(f"module {__name__!r} has no attribute {attr!r}")
 
 
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
