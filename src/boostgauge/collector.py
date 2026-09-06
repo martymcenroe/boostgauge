@@ -111,15 +111,22 @@ class DataCollector:
 
 
 if sys.platform == "win32":
-    from boostgauge.collectors.windows import WindowsCollector
+    from boostgauge.collectors.windows import WindowsCollector as _WindowsCollectorBase
+
+    class WindowsCollector(_WindowsCollectorBase):
+        """Thin wrapper that adds injectable *ntdll* for unit-testing."""
+
+        def __init__(self, thresholds: Thresholds | None = None, ntdll=None) -> None:
+            super().__init__(thresholds)
+            if ntdll is not None:
+                self._ntdll = ntdll
 
 
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     """Platform detection. Windows only for now (#4); Mac/Linux are future."""
     if sys.platform == "win32":
-        from boostgauge.collectors.windows import WindowsCollector
         return WindowsCollector(thresholds)
-    raise NotImplementedError(f"Platform {sys.platform} not supported")
+    return DataCollector(thresholds)
 
 
 class CollectorThread(threading.Thread):
