@@ -110,9 +110,6 @@ class DataCollector:
         raise NotImplementedError
 
 
-from boostgauge.collectors.windows import WindowsCollector
-
-
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     """Platform detection. Windows only for now (#4); Mac/Linux are future."""
     if sys.platform != "win32":

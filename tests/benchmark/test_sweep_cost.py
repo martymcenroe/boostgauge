@@ -2,9 +2,14 @@ from __future__ import annotations
 
 import time
 
+import sys
+
 import pytest
 
-from boostgauge.collectors.windows import WindowsCollector
+if sys.platform == "win32":
+    from boostgauge.collectors.windows import WindowsCollector
+else:
+    WindowsCollector = None  # type: ignore[assignment,misc]
 
 CPU_BUDGET_PER_TICK_S = 0.040
 
