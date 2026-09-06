@@ -8,10 +8,7 @@ import sys
 import time
 from dataclasses import dataclass
 
-try:
-    import psutil
-except ImportError:
-    psutil = None  # type: ignore[assignment]
+import psutil
 
 from boostgauge.collector import (
     DataCollector,
@@ -47,9 +44,12 @@ _ntdll = None
 _PTR_SIZE = ctypes.sizeof(ctypes.c_void_p)
 
 # Fixed offsets within SYSTEM_PROCESS_INFORMATION (64-bit Windows):
+# UNICODE_STRING ImageName starts at 56: Length(USHORT)@56, Buffer(PVOID)@64
+# LONG BasePriority@72, 4-byte pad, HANDLE UniqueProcessId@80
+# HANDLE InheritedFrom@88, ULONG HandleCount@96
 _OFF_NEXT_ENTRY = 0
-_OFF_NAME_LEN = 56           # USHORT — ImageName.Length
-_OFF_NAME_BUF = 64           # PVOID (8 bytes on 64-bit)
+_OFF_NAME_LEN = 56
+_OFF_NAME_BUF = 64
 _OFF_PID = 64 + _PTR_SIZE + 8
 _OFF_INHERITED = _OFF_PID + _PTR_SIZE
 _OFF_HANDLE_COUNT = _OFF_INHERITED + _PTR_SIZE
@@ -74,10 +74,7 @@ def _nt_query_system_information():
 def _psutil_cmdline(pid: int) -> list[str]:
     """Per-row attribute read on an identified row. A row that died is skipped."""
     try:
-        import psutil as _psutil
-        return _psutil.Process(pid).cmdline()
-    except ImportError:
-        return []
+        return psutil.Process(pid).cmdline()
     except Exception:
         return []
 
@@ -94,31 +91,31 @@ class WindowsCollector(DataCollector):
     """One `NtQuerySystemInformation` call per tick; every metric a predicate over it.
 
     `sweep` and `cmdline` are injectable for the unit tier, which stubs the
-    OS calls.
+    OS calls. `ntdll` injects the ntdll handle directly (also for unit tests).
     """
 
     def __init__(self, thresholds: Thresholds | None = None, *,
-                 sweep=None, cmdline=None, nt_query=None) -> None:
+                 sweep=None, cmdline=None, ntdll=None) -> None:
         super().__init__(thresholds)
+        self._ntdll = ntdll
         self._sweep = sweep or self.nt_sweep
         self._cmdline = cmdline or _psutil_cmdline
         self._buffer = ctypes.create_string_buffer(_INITIAL_BUFFER)
-        self._nt_query = nt_query
 
     def nt_sweep(self) -> list[ProcessRow]:
         """The one enumeration: one system call, one walk of the returned block."""
-        ntdll = None if self._nt_query is not None else _nt_query_system_information()
+        ntdll = self._ntdll if self._ntdll is not None else _nt_query_system_information()
+        if ntdll is None:
+            raise OSError("NtQuerySystemInformation not available on this platform")
+
         retries = 0
         while retries < 10:
-            if self._nt_query is not None:
-                status = self._nt_query(self._buffer, len(self._buffer))
-            else:
-                status = ntdll.NtQuerySystemInformation(
-                    SYSTEM_PROCESS_INFORMATION,
-                    self._buffer,
-                    len(self._buffer),
-                    None,
-                )
+            status = ntdll.NtQuerySystemInformation(
+                SYSTEM_PROCESS_INFORMATION,
+                self._buffer,
+                len(self._buffer),
+                None,
+            )
             if status == STATUS_INFO_LENGTH_MISMATCH:
                 self._buffer = ctypes.create_string_buffer(
                     len(self._buffer) + _GROWTH_SLACK
@@ -188,8 +185,7 @@ class WindowsCollector(DataCollector):
                 if is_unleashed_cmdline(cmdline_args):
                     unleashed_sessions += 1
 
-        import psutil as _psutil
-        memory_percent = _psutil.virtual_memory().percent
+        memory_percent = psutil.virtual_memory().percent
 
         if self.thresholds:
             composite_value, driver = composite(
