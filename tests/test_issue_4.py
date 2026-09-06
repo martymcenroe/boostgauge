@@ -241,3 +241,85 @@ def test_psutil_no_such_process_handled(monkeypatch):
     import psutil
     monkeypatch.setattr("psutil.Process", lambda pid: (_ for _ in ()).throw(psutil.NoSuchProcess(pid)))
     assert _psutil_cmdline(99999) == []
+
+
+import sys
+
+
+import struct
+
+
+import unittest.mock
+
+
+import pytest
+
+
+from boostgauge.collector import Band, normalize, make_collector, WindowsCollector, ProcessRow, _psutil_cmdline, CollectorThread
+
+
+def test_normalize_above_red_returns_100():
+    band = Band(10, 20)
+    assert normalize(25, band) == 100.0
+
+
+def test_normalize_at_yellow_returns_60():
+    band = Band(10, 20)
+    assert normalize(10, band) == 60.0
+
+
+def test_make_collector_not_implemented_on_linux(monkeypatch):
+    monkeypatch.setattr("sys.platform", "linux")
+    with pytest.raises(NotImplementedError):
+        make_collector()
+
+
+def test_make_collector_not_implemented_on_darwin(monkeypatch):
+    monkeypatch.setattr("sys.platform", "darwin")
+    with pytest.raises(NotImplementedError):
+        make_collector()
+
+
+def test_windows_collector_empty_sweep_returns_empty_list():
+    c = WindowsCollector(sweep=lambda: [])
+    snap = c.collect()
+    assert snap.process_count == 0
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_nt_sweep_32bit_offsets_parsed(monkeypatch):
+    """Cover the 32-bit offset branch by injecting a minimal buffer."""
+    import ctypes
+    # Build a fake buffer that triggers the 32-bit path:
+    # _OFF_NAME_BUF needs to be defined; we just test that the path doesn't crash
+    # by making ntdll return success with a zeroed buffer.
+    mock_ntdll = unittest.mock.MagicMock()
+    # Return STATUS_SUCCESS (0) immediately so parsing runs
+    buf_size = 4096
+    mock_ntdll.NtQuerySystemInformation.return_value = 0
+    # Patch the buffer so it's large enough but zeroed (next_entry_offset=0 -> stops loop)
+    c = WindowsCollector()
+    c._buffer = (ctypes.c_byte * buf_size)()
+    monkeypatch.setattr("boostgauge.collectors.windows._nt_query_system_information", lambda: mock_ntdll)
+    result = c.nt_sweep()
+    assert isinstance(result, list)
+
+
+def test_psutil_cmdline_no_such_process(monkeypatch):
+    import psutil
+    monkeypatch.setattr("psutil.Process", lambda pid: (_ for _ in ()).throw(psutil.NoSuchProcess(pid)))
+    result = _psutil_cmdline(9999999)
+    assert result == []
+
+
+def test_collector_thread_composite_value_queued():
+    """Cover the composite() call path in CollectorThread."""
+    snap = unittest.mock.MagicMock()
+    snap.__str__ = lambda s: "snap"
+    collector = unittest.mock.MagicMock()
+    collector.collect.return_value = snap
+    t = CollectorThread(collector, interval=0.01)
+    t.start()
+    item = t.snapshots.get(timeout=2.0)
+    t.stop()
+    assert item is snap
