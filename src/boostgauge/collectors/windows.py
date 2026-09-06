@@ -10,12 +10,10 @@ from dataclasses import dataclass
 
 import psutil
 
-from boostgauge.collector import (
-    DataCollector,
-    SystemSnapshot,
-    Thresholds,
-    composite,
-)
+# No module-level import from boostgauge.collector: collector.py imports
+# WindowsCollector at module level on win32, so windows.py must be fully
+# initialized before that re-entrant import fires. Lazy imports inside
+# collect() break the cycle.
 
 __all__ = [
     "SYSTEM_PROCESS_INFORMATION",
@@ -87,16 +85,16 @@ def is_unleashed_cmdline(args: list[str]) -> bool:
     return False
 
 
-class WindowsCollector(DataCollector):
+class WindowsCollector:
     """One `NtQuerySystemInformation` call per tick; every metric a predicate over it.
 
     `sweep` and `cmdline` are injectable for the unit tier, which stubs the
     OS calls. `ntdll` injects the ntdll handle directly (also for unit tests).
     """
 
-    def __init__(self, thresholds: Thresholds | None = None, *,
+    def __init__(self, thresholds=None, *,
                  sweep=None, cmdline=None, ntdll=None) -> None:
-        super().__init__(thresholds)
+        self.thresholds = thresholds
         self._ntdll = ntdll
         self._sweep = sweep or self.nt_sweep
         self._cmdline = cmdline or _psutil_cmdline
@@ -167,8 +165,10 @@ class WindowsCollector(DataCollector):
 
         return rows
 
-    def collect(self) -> SystemSnapshot:
+    def collect(self):
         """One tick: one enumeration, one snapshot."""
+        from boostgauge.collector import SystemSnapshot, composite
+
         rows = self._sweep()
 
         process_count = len(rows)

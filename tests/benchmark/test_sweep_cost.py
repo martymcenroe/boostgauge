@@ -4,8 +4,6 @@ import time
 
 import pytest
 
-from boostgauge.collectors.windows import WindowsCollector
-
 CPU_BUDGET_PER_TICK_S = 0.040
 
 
