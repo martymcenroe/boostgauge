@@ -4,10 +4,7 @@ import time
 
 import pytest
 
-try:
-    from boostgauge.collectors.windows import WindowsCollector
-except Exception:  # noqa: BLE001
-    WindowsCollector = None  # type: ignore[assignment,misc]
+from boostgauge.collectors.windows import WindowsCollector
 
 CPU_BUDGET_PER_TICK_S = 0.040
 

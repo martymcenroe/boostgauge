@@ -10,12 +10,12 @@ from dataclasses import dataclass
 
 import psutil
 
->>>>>>> REPLACE
-
-<<<<<<< SEARCH
-class WindowsCollector(DataCollector):
-=======
-class WindowsCollector(object):
+from boostgauge.collector import (
+    DataCollector,
+    SystemSnapshot,
+    Thresholds,
+    composite,
+)
 
 __all__ = [
     "SYSTEM_PROCESS_INFORMATION",
@@ -204,16 +204,3 @@ class WindowsCollector(DataCollector):
             driver=driver,
             composite_value=composite_value,
         )
-
-
-# Deferred to break the circular import: collector.py imports WindowsCollector at
-# line 114, so WindowsCollector must be fully defined before that import runs.
-# Moving this block to the bottom ensures the class exists in sys.modules when
-# collector.py reaches its own import of this name.
-from boostgauge.collector import (  # noqa: E402
-    DataCollector,
-    SystemSnapshot,
-    Thresholds,
-    composite,
-)
-WindowsCollector.__bases__ = (DataCollector,)
