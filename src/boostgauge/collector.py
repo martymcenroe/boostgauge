@@ -91,11 +91,10 @@ def composite(conpty_count: int, memory_percent: float, process_count: int,
     return best_val, best_name
 
 
-def _psutil_cmdline(pid: int) -> list[str]:
-    """Return the command-line of a process by PID, or [] on any error."""
+def _psutil_cmdline(proc) -> list[str]:
+    """Return the command-line of a psutil Process, or [] on access error."""
     try:
-        import psutil
-        return psutil.Process(pid).cmdline()
+        return proc.cmdline()
     except Exception:
         return []
 
@@ -119,7 +118,7 @@ def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     if sys.platform == "win32":
         from boostgauge.collectors.windows import WindowsCollector
         return WindowsCollector(thresholds)
-    raise OSError(f"Platform {sys.platform} not supported")
+    raise NotImplementedError(f"Platform {sys.platform} not supported")
 
 
 class CollectorThread(threading.Thread):

@@ -126,9 +126,10 @@ def test_req_8_cpu_benchmark_is_fast():
 
 
 def test_req_9_buffer_growth_on_mismatch(monkeypatch):
-    mock_fn = unittest.mock.MagicMock(side_effect=[-1073741820, 0])
+    mock_ntdll = unittest.mock.MagicMock()
+    mock_ntdll.NtQuerySystemInformation.side_effect = [-1073741820, 0]
     monkeypatch.setattr(
-        "boostgauge.collectors.windows._nt_query_system_information", mock_fn
+        "boostgauge.collectors.windows._nt_query_system_information", lambda: mock_ntdll
     )
     c = WindowsCollector()
     initial_len = len(c._buffer)
@@ -137,14 +138,15 @@ def test_req_9_buffer_growth_on_mismatch(monkeypatch):
 
 
 def test_req_10_oserror_fallback(monkeypatch):
-    mock_fn = unittest.mock.MagicMock(return_value=-1)
+    mock_ntdll = unittest.mock.MagicMock()
+    mock_ntdll.NtQuerySystemInformation.return_value = -1
     monkeypatch.setattr(
-        "boostgauge.collectors.windows._nt_query_system_information", mock_fn
+        "boostgauge.collectors.windows._nt_query_system_information", lambda: mock_ntdll
     )
     c = WindowsCollector()
     with pytest.raises(OSError):
         c.nt_sweep()
-    mock_fn.return_value = -1073741820
+    mock_ntdll.NtQuerySystemInformation.return_value = -1073741820
     with pytest.raises(OSError):
         c.nt_sweep()
 
