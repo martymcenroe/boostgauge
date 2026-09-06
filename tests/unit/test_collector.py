@@ -160,14 +160,7 @@ def test_req_11_composite_math_bounds():
 
 def test_req_12_thread_continues_on_error():
     c = unittest.mock.MagicMock()
-    errors = [Exception("mock error")]
-
-    def _se():
-        if errors:
-            raise errors.pop(0)
-        return "success_snapshot"
-
-    c.collect.side_effect = _se
+    c.collect.side_effect = [Exception("mock error"), "success_snapshot"]
     t = CollectorThread(c, interval=0.01)
     t.start()
     item = t.snapshots.get(timeout=1.0)

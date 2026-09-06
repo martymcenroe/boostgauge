@@ -4,6 +4,8 @@ import time
 
 import pytest
 
+from boostgauge.collectors.windows import WindowsCollector
+
 CPU_BUDGET_PER_TICK_S = 0.040
 
 
@@ -12,7 +14,6 @@ CPU_BUDGET_PER_TICK_S = 0.040
     reason="Windows-only: NtQuerySystemInformation not available",
 )
 def test_full_collect_tick_is_under_one_percent_of_a_core():
-    from boostgauge.collectors.windows import WindowsCollector  # noqa: PLC0415
     c = WindowsCollector()
     c.collect()
     start = time.process_time()
