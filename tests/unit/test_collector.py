@@ -219,3 +219,148 @@ def test_collector_thread_puts_snapshot_in_queue():
     item = t.snapshots.get(timeout=1.0)
     t.stop()
     assert item is snap
+
+
+import sys
+import ctypes
+import struct
+import unittest.mock
+
+import pytest
+import psutil
+
+from boostgauge.collector import Band, Thresholds, composite, normalize, make_collector
+from boostgauge.collectors.windows import WindowsCollector, _psutil_cmdline, ProcessRow
+
+
+# normalize: yellow == 0, value < red
+def test_normalize_yellow_zero_value_below_red():
+    band = Band(yellow=0, red=100.0)
+    assert normalize(50.0, band) == 60.0
+
+
+# normalize: yellow == 0, value >= red
+def test_normalize_yellow_zero_value_at_red():
+    band = Band(yellow=0, red=100.0)
+    assert normalize(100.0, band) == 100.0
+
+
+def test_normalize_yellow_zero_value_above_red():
+    band = Band(yellow=0, red=100.0)
+    assert normalize(150.0, band) == 100.0
+
+
+# normalize: red == yellow (non-zero), value between yellow and red
+def test_normalize_red_equals_yellow_returns_100():
+    band = Band(yellow=50.0, red=50.0)
+    assert normalize(50.0, band) == 100.0
+
+
+# composite: thresholds passed as dict
+def test_composite_accepts_dict_thresholds():
+    thresholds_dict = {
+        "conpty": {"yellow": 10, "red": 20},
+        "memory_percent": {"yellow": 50, "red": 100},
+        "process_count": {"yellow": 10, "red": 20},
+        "handle_count": {"yellow": 10, "red": 20},
+    }
+    val, driver = composite(5, 75.0, 5, 5, thresholds_dict)
+    assert driver == "memory_percent"
+    assert val == 80.0
+
+
+# DataCollector.collect raises NotImplementedError
+def test_base_collector_collect_raises():
+    from boostgauge.collector import DataCollector
+    class Concrete(DataCollector):
+        pass
+    c = Concrete()
+    with pytest.raises(NotImplementedError):
+        c.collect()
+
+
+# make_collector on non-win32 raises NotImplementedError
+def test_make_collector_non_win32_raises(monkeypatch):
+    monkeypatch.setattr(sys, "platform", "linux")
+    with pytest.raises(NotImplementedError):
+        make_collector()
+
+
+# make_collector on win32 returns WindowsCollector
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows only")
+def test_make_collector_win32_returns_windows_collector():
+    c = make_collector()
+    assert isinstance(c, WindowsCollector)
+
+
+# _psutil_cmdline: generic exception returns []
+def test_psutil_cmdline_generic_exception(monkeypatch):
+    monkeypatch.setattr("psutil.Process", lambda pid: (_ for _ in ()).throw(RuntimeError("fail")))
+    assert _psutil_cmdline(99999) == []
+
+
+# nt_sweep: ntdll is None raises OSError
+def test_nt_sweep_ntdll_none_raises(monkeypatch):
+    monkeypatch.setattr("boostgauge.collectors.windows._nt_query_system_information", lambda: None)
+    c = WindowsCollector()
+    c._ntdll = None
+    with pytest.raises(OSError, match="not available"):
+        c.nt_sweep()
+
+
+# nt_sweep: UnicodeDecodeError in name decoding is silently skipped
+def test_nt_sweep_unicode_decode_error_skipped(monkeypatch):
+    import boostgauge.collectors.windows as wmod
+
+    mock_ntdll = unittest.mock.MagicMock()
+    mock_ntdll.NtQuerySystemInformation.return_value = 0
+
+    # Build a minimal buffer: one entry with name_len > 0 but a bad pointer
+    # We'll patch ctypes.string_at to raise UnicodeDecodeError path
+    # Structure layout: we just need a valid-enough buffer that parses one row then stops.
+    # Easiest: patch nt_sweep at the ctypes.string_at call.
+    original_string_at = ctypes.string_at
+
+    call_count = [0]
+    def bad_string_at(ptr, size):
+        call_count[0] += 1
+        raise OSError("bad ptr")
+
+    buf_size = 512
+    buf = ctypes.create_string_buffer(buf_size)
+    # next_entry_offset = 0 (stop after first), name_len > 0, name_buf_ptr != 0
+    struct.pack_into("<I", buf, wmod._OFF_NEXT_ENTRY, 0)
+    struct.pack_into("<H", buf, wmod._OFF_NAME_LEN, 4)
+    if wmod._PTR_SIZE == 8:
+        struct.pack_into("<Q", buf, wmod._OFF_PID, 1)
+        struct.pack_into("<I", buf, wmod._OFF_HANDLE_COUNT, 0)
+        struct.pack_into("<Q", buf, wmod._OFF_NAME_BUF, 0xDEADBEEF)
+    else:
+        _off_pid_32 = 64 + 4 + 8
+        _off_handle_32 = _off_pid_32 + 8
+        struct.pack_into("<I", buf, _off_pid_32, 1)
+        struct.pack_into("<I", buf, _off_handle_32, 0)
+        struct.pack_into("<I", buf, wmod._OFF_NAME_BUF, 0xDEADBEEF)
+
+    c = WindowsCollector()
+    c._ntdll = mock_ntdll
+    c._buffer = buf
+
+    with unittest.mock.patch("ctypes.string_at", bad_string_at):
+        rows = c.nt_sweep()
+
+    assert call_count[0] >= 1
+    # The row should still be appended, just with empty name
+    assert len(rows) == 1
+    assert rows[0].name == ""
+
+
+# collect: with thresholds set, composite is called and driver/value populated
+def test_collect_with_thresholds_uses_composite(monkeypatch):
+    monkeypatch.setattr("psutil.virtual_memory", lambda: type("M", (), {"percent": 80.0})())
+    thresholds = Thresholds(Band(10, 20), Band(50, 100), Band(10, 20), Band(10, 20))
+    rows = [ProcessRow(pid=1, name="conhost.exe", handle_count=5)]
+    c = WindowsCollector(sweep=lambda: rows, cmdline=lambda p: [], thresholds=thresholds)
+    snap = c.collect()
+    assert snap.driver != ""
+    assert snap.composite_value > 0.0
