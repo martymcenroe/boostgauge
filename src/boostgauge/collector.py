@@ -8,6 +8,14 @@ from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
+class ProcessRow:
+    """A single row from a process-list sweep: pid, name, handle_count."""
+    pid: int
+    name: str
+    handle_count: int
+
+
+@dataclass(frozen=True)
 class Band:
     """A metric's yellow and red thresholds in the metric's own unit."""
     yellow: float

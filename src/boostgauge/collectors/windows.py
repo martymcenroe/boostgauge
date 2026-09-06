@@ -8,8 +8,6 @@ import sys
 import time
 from dataclasses import dataclass
 
-import psutil
-
 from boostgauge.collector import (
     DataCollector,
     SystemSnapshot,
@@ -82,8 +80,11 @@ def _nt_query_system_information():
 def _psutil_cmdline(pid: int) -> list[str]:
     """Per-row attribute read on an identified row. A row that died is skipped."""
     try:
-        return psutil.Process(pid).cmdline()
-    except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        import psutil as _psutil
+        return _psutil.Process(pid).cmdline()
+    except ImportError:
+        return []
+    except Exception:
         return []
 
 
@@ -190,7 +191,8 @@ class WindowsCollector(DataCollector):
                 if is_unleashed_cmdline(cmdline_args):
                     unleashed_sessions += 1
 
-        memory_percent = psutil.virtual_memory().percent
+        import psutil as _psutil
+        memory_percent = _psutil.virtual_memory().percent
 
         if self.thresholds:
             from boostgauge.collector import composite
