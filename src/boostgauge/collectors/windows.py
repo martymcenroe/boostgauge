@@ -98,20 +98,12 @@ class WindowsCollector(DataCollector):
     """
 
     def __init__(self, thresholds: Thresholds | None = None, *,
-                 sweep=None, cmdline=None, nt_query=None, ntdll=None) -> None:
+                 sweep=None, cmdline=None, nt_query=None) -> None:
         super().__init__(thresholds)
         self._sweep = sweep or self.nt_sweep
         self._cmdline = cmdline or _psutil_cmdline
         self._buffer = ctypes.create_string_buffer(_INITIAL_BUFFER)
-        if nt_query is not None:
-            self._nt_query = nt_query
-        elif ntdll is not None:
-            _dll = ntdll
-            self._nt_query = lambda buf, length: _dll.NtQuerySystemInformation(
-                SYSTEM_PROCESS_INFORMATION, buf, length, None
-            )
-        else:
-            self._nt_query = None
+        self._nt_query = nt_query
 
     def nt_sweep(self) -> list[ProcessRow]:
         """The one enumeration: one system call, one walk of the returned block."""
