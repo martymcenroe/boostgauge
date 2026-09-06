@@ -10,7 +10,12 @@ from dataclasses import dataclass
 
 import psutil
 
-
+from boostgauge.collector import (
+    DataCollector,
+    SystemSnapshot,
+    Thresholds,
+    composite,
+)
 
 __all__ = [
     "SYSTEM_PROCESS_INFORMATION",
@@ -82,7 +87,7 @@ def is_unleashed_cmdline(args: list[str]) -> bool:
     return False
 
 
-class WindowsCollector:
+class WindowsCollector(DataCollector):
     """One `NtQuerySystemInformation` call per tick; every metric a predicate over it.
 
     `sweep` and `cmdline` are injectable for the unit tier, which stubs the
@@ -199,17 +204,3 @@ class WindowsCollector:
             driver=driver,
             composite_value=composite_value,
         )
-
-
-# Deferred import breaks the circular dependency: boostgauge.collector imports
-# this module at line 113, so importing collector here at module-load time (before
-# WindowsCollector is defined) causes the partially-initialised-module ImportError.
-# By deferring to after the class body, WindowsCollector exists when collector.py
-# re-enters this module, and DataCollector is available for __bases__ back-patching.
-from boostgauge.collector import (  # noqa: E402
-    DataCollector,
-    SystemSnapshot,
-    Thresholds,
-    composite,
-)
-WindowsCollector.__bases__ = (DataCollector,)
