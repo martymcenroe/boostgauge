@@ -119,7 +119,7 @@ def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
     if sys.platform == "win32":
         from boostgauge.collectors.windows import WindowsCollector
         return WindowsCollector(thresholds)
-    return DataCollector(thresholds)
+    raise NotImplementedError(f"Platform {sys.platform} not supported")
 
 
 class CollectorThread(threading.Thread):
