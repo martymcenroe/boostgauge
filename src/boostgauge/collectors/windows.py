@@ -14,7 +14,6 @@ from boostgauge.collector import (
     DataCollector,
     SystemSnapshot,
     Thresholds,
-    composite,
 )
 
 SYSTEM_PROCESS_INFORMATION = 5
@@ -194,6 +193,7 @@ class WindowsCollector(DataCollector):
         memory_percent = psutil.virtual_memory().percent
 
         if self.thresholds:
+            from boostgauge.collector import composite
             composite_value, driver = composite(
                 conpty_count, memory_percent, process_count, handle_count, self.thresholds
             )
