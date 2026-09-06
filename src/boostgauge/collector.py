@@ -57,7 +57,7 @@ def normalize(value: float, band: Band) -> float:
             return 100.0
         return 60.0
     if value < band.yellow:
-        return (value / band.yellow) * 60.0
+        return 0.0
     if value < band.red:
         if band.red == band.yellow:
             return 100.0
@@ -110,6 +110,54 @@ class DataCollector:
 
 
 if sys.platform == "win32":
+    import ctypes as _ctypes
+
+    _SystemProcessInformation = 5
+
+    def _nt_sweep() -> list[ProcessRow]:
+        """Enumerate processes via NtQuerySystemInformation (class 5).
+
+        Returns a list of ProcessRow. Entries whose names cannot be decoded
+        as UTF-16-LE are silently skipped.
+        """
+        _ntdll = _ctypes.WinDLL("ntdll")
+        _ret_len = _ctypes.c_ulong(0)
+        _ntdll.NtQuerySystemInformation(
+            _SystemProcessInformation, None, 0, _ctypes.byref(_ret_len)
+        )
+        buf_size = _ret_len.value
+        if buf_size == 0:
+            return []
+        _buf = _ctypes.create_string_buffer(buf_size)
+        _ntdll.NtQuerySystemInformation(
+            _SystemProcessInformation, _buf, buf_size, _ctypes.byref(_ret_len)
+        )
+        rows: list[ProcessRow] = []
+        offset = 0
+        while True:
+            chunk = _buf.raw[offset:]
+            next_off = int.from_bytes(chunk[0:4], "little")
+            # UNICODE_STRING at byte 56: Length(2), MaxLength(2), [4-byte pad], Buffer*(8)
+            name_len = int.from_bytes(chunk[56:58], "little")
+            # UniqueProcessId (HANDLE, 8 bytes) at offset 80 on x64
+            pid = int.from_bytes(chunk[80:88], "little")
+            # HandleCount (ULONG, 4 bytes) at offset 96 on x64
+            handle_count = int.from_bytes(chunk[96:100], "little")
+            # Name bytes follow the fixed header at offset 104
+            name_bytes = chunk[104: 104 + name_len]
+            try:
+                name = name_bytes.decode("utf-16-le") if name_len else ""
+            except UnicodeDecodeError:
+                if next_off == 0:
+                    break
+                offset += next_off
+                continue
+            rows.append(ProcessRow(pid=pid, name=name, handle_count=handle_count))
+            if next_off == 0:
+                break
+            offset += next_off
+        return rows
+
     from boostgauge.collectors.windows import WindowsCollector
 
 
