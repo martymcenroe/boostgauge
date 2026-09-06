@@ -164,7 +164,7 @@ def test_req_12_thread_continues_on_error():
 
 def test_req_13_mac_linux_raises_notimplemented(monkeypatch):
     monkeypatch.setattr("sys.platform", "linux")
-    with pytest.raises(OSError):
+    with pytest.raises(NotImplementedError):
         make_collector()
 
 
