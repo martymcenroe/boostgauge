@@ -110,8 +110,7 @@ class DataCollector:
         raise NotImplementedError
 
 
-if sys.platform == "win32":
-    from boostgauge.collectors.windows import WindowsCollector
+from boostgauge.collectors.windows import WindowsCollector
 
 
 def make_collector(thresholds: Thresholds | None = None) -> DataCollector:
