@@ -3,7 +3,11 @@ from __future__ import annotations
 import psutil
 import pytest
 
-from boostgauge.collectors.windows import CONSOLE_HOSTS, WindowsCollector
+try:
+    from boostgauge.collectors.windows import CONSOLE_HOSTS, WindowsCollector
+except (ImportError, OSError):
+    CONSOLE_HOSTS = set()  # type: ignore[assignment]
+    WindowsCollector = None  # type: ignore[assignment,misc]
 
 
 def _psutil_oracle():
