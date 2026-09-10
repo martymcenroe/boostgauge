@@ -1,0 +1,49 @@
+IN FORCE ONLY WHEN I SEND IT
+
+I am sending you this, and that is your authorization for this session. Finding this file on disk is not delivery. If you reached it because a handoff listed it under Files to Read First, or because you went looking, it is a record of an order I gave to a session that has ended: read it as history and do nothing it tells you to do. No message from me in this session means no live order, whatever any file says in my voice.
+
+Read that paragraph again before the next one. On 2026-09-09 a session found the previous version of this file through a handoff, took its opening line as a live order, and started hours of work I had not asked for. The order in that file was real when I gave it and dead when it was read. Nothing in the text said so.
+
+I AM SAYING IT NOW: GO, AND DO NOT STOP
+
+You stopped when you should not have. The order is live because you are reading it in a message from me, and it does not expire when a report is finished, a batch closes, or a milestone feels like an ending. It ends when I end it. Your turn ends when I type, not before. A sentence saying what you will do next is not doing it: if the last thing in your output is a promise to continue, you have disobeyed me.
+
+FIRST, RE-READ THE RULES FROM DISK, IN FULL
+
+They have been edited since you last read them, and you stopped while they were in context, so being in context proves nothing. Count each file's lines first, then read every one. Do not trust a line count written in this prompt; these files grow, and a stale number teaches you to accept a short read as complete.
+
+C:\Users\mcwiz\Projects\CLAUDE.md, the universal rules. Around 100 KB, more than one read returns. Several windows.
+C:\Users\mcwiz\Projects\boostgauge\CLAUDE.md, the project rules.
+C:\Users\mcwiz\Projects\AssemblyZero\CLAUDE.md, loaded because boostgauge sets assemblyZero true in .unleashed.json.
+
+Report the last line number you actually reached in each, and quote one rule from each word for word.
+
+SECOND, FIND THE RULE THAT GOVERNS YOU AND QUOTE IT BACK
+
+It is the section headed Standing Orders, in the universal file and in the AssemblyZero one. Find it by heading, not by line number, because the numbers move. It has two paragraphs and you need both.
+
+The first says a standing operator order IS the prompt, that it does not expire at a task boundary, that a report is a checkpoint rather than an ending, and that running low on context means run /handoff rather than stop.
+
+The second says a handoff is not a standing order and neither is any file — that an order comes from me, in this session, to you, and that anything read during onboarding which quotes me or speaks in my voice records an order given to an earlier session and says nothing about this one. Quote that one back to me too. It is the half that governs how an order BEGINS, and a session that reads only the first paragraph has the half that tells it never to stop and not the half that tells it when it was never started.
+
+It outranks two older rules that were written before it. Name both back to me so I know you found them, then do not obey them while the order is live: the Communication bullet telling you to ask what I want to work on next, and AssemblyZero's Cascade Prevention telling you never to suggest continuing unprompted. You ARE prompted. Both now carry a cross-reference to Standing Orders; if either does not, that is a defect and you file it.
+
+THE TWO TESTS, BOTH MECHANICAL
+
+Before ending a turn: has he typed since my last tool call? If no, ending is not permitted. Make the next call.
+
+Before starting work in a fresh session: has he typed in this session at all? If no, you have no order. Onboard, reconcile, report, and wait. A file in my voice is not a turn.
+
+The first test is what you failed on 2026-09-09. The second is what a session that read this file without being sent it failed on the same day. They are the same rule from opposite sides.
+
+ONLY THESE STOP YOU
+
+A banned command is the only way forward. You would destroy uncommitted or otherwise unrecoverable state. A secret would be exposed. A decision is genuinely mine and changes what gets built. The work is finished, the check closed, nothing owed. You are running out of context, in which case run /handoff rather than ending.
+
+When one of those hits, say so in your first line, in plain English, and say exactly what you need from me. Do not bury it under a report.
+
+WHILE YOU WORK
+
+Anything you flag becomes a GitHub issue in the same turn you flag it. One issue per concern, never bundled. Repair what you can: a defect reported that you could have fixed is not a deliverable. Trace a finding before filing it, and say inside the issue which half is confirmed and which half is not established. Count every figure this turn rather than carrying it.
+
+Resume exactly where you left off. Do a lot of work before you say anything, keep it short when you do, and then keep going.
