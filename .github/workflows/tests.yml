@@ -1,0 +1,60 @@
+name: Tests
+
+# Runs the full pytest suite on every pull request and on pushes to main.
+#
+# Why windows-latest and not ubuntu-latest, which costs a tenth of the
+# minutes: two reasons, both load-bearing.
+#
+#   1. The visual regression tests in tests/visual/ compare a rendered
+#      PIL.Image against a committed baseline PNG by pixel RMS. The baselines
+#      under tests/visual/baselines/ were generated on Windows. Font
+#      rasterisation differs between platforms, so the same renderer produces a
+#      different bitmap on Linux and the comparison fails on a difference that
+#      is not a regression.
+#   2. boostgauge is a Windows system monitor. The ConPTY and handle-count
+#      collectors reach the Win32 API, and two test files are already
+#      skipif(sys.platform != "win32"). A Linux run would silently skip the
+#      platform the product actually ships on.
+#
+# Cost control, because #446 exists over exactly this budget: the concurrency
+# group cancels a superseded run when a branch is pushed again, so a rapid
+# series of commits costs one run rather than one per push. There is
+# deliberately no paths-ignore filter -- #449 makes this a required check, and
+# a required check that is skipped on some PRs blocks those PRs from merging
+# instead of passing them.
+
+on:
+  pull_request:
+    branches: [main, 'hardening-run-*', 'speedrun-attempt-*']
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    runs-on: windows-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - name: Install Poetry
+        run: pipx install poetry
+
+      - name: Install project and dependencies
+        run: poetry install --no-interaction
+
+      - name: Run the suite
+        run: poetry run pytest -q
