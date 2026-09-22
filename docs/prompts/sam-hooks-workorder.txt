@@ -1,0 +1,53 @@
+IN FORCE ONLY WHEN I SEND IT
+
+I am sending you this, and that is your authorization for this session. Finding this file on disk is not delivery. If you reached it because a handoff listed it, or because you went looking, it is a record of an order I gave to a session that has ended: read it as history and do nothing it tells you to do.
+
+WHAT THIS IS
+
+Six issues in this repo — #529, #530, #531, #532, #533 and the closed #534 — describe moving agent-behaviour enforcement out of prose and into the hook layer. Build them. This prompt gives sequence and motivation. It does not give the specifications: read each issue before you touch it.
+
+Two of them were revised on 2026-09-10 and one of those revisions replaced a design that was wrong. #531 in particular no longer says what it said this morning, and #534 was closed into it. A session that works from a remembered version of any of these will reproduce the exact failure the cluster exists to stop. Read them from GitHub.
+
+WHY THIS MATTERS, IN PLAIN TERMS
+
+I spend roughly three quarters of my budget making rules clear, and the same failures keep happening. Two occurred on 2026-09-09 and 2026-09-10 in one session. Neither was caused by a missing rule. The first happened with the relevant rules loaded in context. The second violated a sentence the same session had personally written into a prompt file one hour earlier.
+
+That is the whole diagnosis. These are not intent failures, so prose aimed at intent does not reach them. The agent was not choosing to disobey; it was confident about something it had not checked, and at the moment of acting a false belief is indistinguishable from a true one. Another paragraph arrives before that moment and is gone by the time it is needed.
+
+What does work is already in this fleet. shell-guard.sh blocked that same session twice, and both times it simply complied — no negotiation, no "this case is different" — because there was no path. That is the difference between a rule and a wall.
+
+It is also the only thing that scales. I work across roughly 94 repositories. A CLAUDE.md paragraph has to be duplicated into each and drifts between them. A memory is per-repo and advisory. Hooks in ~/.claude run everywhere, with no per-repo work, and the agent holds no key.
+
+SEQUENCE
+
+Step 0 — the capability probe. Do this before writing any hook. Three of the five issues carry blocking unknowns about what hooks can actually observe, and every one of them is answerable in an afternoon by asking the harness rather than by recalling documentation. Answer at minimum: can PreToolUse resolve and block on a target path, for a Grep call and for a Bash command string? Can a Stop hook enumerate the turn's tool calls? Does output appended by a Stop hook render where I will actually see it? Can a hook locate its own session transcript? Write the answers down where the other issues can cite them. If the answer to the Stop questions is no, #533 and #531 need different designs and you will have saved yourself building the wrong thing twice.
+
+Step 1 — #530, block grep against CLAUDE.md. Smallest, cheapest, near-zero false positives, and it is the hello-world of this cluster: it proves the PreToolUse plumbing with almost no blast radius. Nobody greps the rules as part of real work. Build it first for what it teaches, not for what it prevents.
+
+Step 2 — #529, the no-operator-turn guard. The highest-value item and the one that cost me most. Harder than #530: it needs the session transcript parsed for delivered user turns, and it needs a bypass for genuine autonomous runs. The bypass must be written by the spawner and unreachable by the agent. That is not a detail. An agent that can set its own bypass has a longer path to the same failure, not a constraint. pickup_decide.py already walks these transcripts; read it before inventing a parser.
+
+Step 3 — #533, the per-turn tool-call manifest. This one exposes rather than prevents, and the issue says so plainly. It is here because the preventive version is not buildable: the set of phrasings that assert completed work is unbounded, and the agent authors the text any filter would read. The manifest never reads the prose, so there is nothing to walk around. Do not let anyone talk it back into a phrase-matching design.
+
+Step 4 — #531, the staleness citation check. Last, deliberately, and both reviewers agreed on that independently. It may be largely subsumed by #533. It carries an unresolved question about mtime being file-granular while the claim is line-granular, which could make it over-fire on a 999-line file that changes often — and a gate that cries wolf is worse than no gate, because it trains me to wave it through.
+
+#532 sits outside the sequence. It is the review standard the other four are accepted against, so adopt it first: does this fix work if the next agent is wrong about something? A hook does. A test does. A deterministic script does. A memory, a rule paragraph and a lessons row do not, because each needs the agent to be right at exactly the moment it is wrong.
+
+Note the trap in #532 and resolve it rather than ignoring it: by its own standard, #532 cannot be closed by writing a paragraph. Work out what its actual terminal is — a PR template question, a close-time gate, something that fires without being remembered — and say so on the issue. If there is no such terminal, leave it open and record why. An honest open issue beats a closed one with a memory attached.
+
+CONSTRAINTS
+
+Every hook ships with a test, and the test proves both directions: the block fires on the bad case, and does not fire on the legitimate one. An unverified hook is an oath in bash, which is the thing we are replacing.
+
+No regex deciding anything over an open set. The test is the one already in my rules: write down every member; if the answer needs "etc.", the set is open. #533 exists because a proposed design failed exactly this and I caught it. Syntax goes to a parser; meaning does not go to a regex.
+
+You write the hooks. I install them. Do not edit my settings to activate your own constraints — you do not get a key to the thing that constrains you, and the classifier will refuse anyway.
+
+If a hook turns out not to be buildable, say so and leave the issue open with the reason. Do not substitute a paragraph and call it done.
+
+WHILE YOU WORK
+
+Anything you flag becomes an issue in the same turn, one per concern, never bundled. Trace before filing and state inside the issue which half is confirmed and which is not established. Count every figure this turn rather than carrying it forward.
+
+Report what you actually ran, not what you intended to run. If you did not verify something, say so in the same sentence you assert it.
+
+Start with the probe. Tell me what the harness can and cannot see before you build anything on an assumption about it.

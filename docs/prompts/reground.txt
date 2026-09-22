@@ -1,0 +1,50 @@
+Before you answer anything, run the reads below against disk with your file tools.
+
+You do not have these files in context. A compaction just discarded them, and whatever you think you remember of them is not evidence. If you are about to reply that a file is already in context and skip reading it, you have failed this prompt. Read it anyway.
+
+READ, IN FULL, FROM DISK
+
+1. C:\Users\mcwiz\Projects\CLAUDE.md, the universal rules. Count its lines first, then read every one of them. It is around 100 KB, which is more than a single read returns, and an over-long read comes back looking like a success. Four or five windows.
+2. C:\Users\mcwiz\Projects\boostgauge\CLAUDE.md, the project rules.
+3. C:\Users\mcwiz\Projects\AssemblyZero\CLAUDE.md. boostgauge's .unleashed.json sets assemblyZero true, so this is part of this session's rule set, and a compaction drops it along with the other two.
+4. The last ten rows of C:\Users\mcwiz\Projects\boostgauge\docs\lessons-learned.md. It is one long table with a single heading, so read the tail of the file.
+5. The two most recent files in C:\Users\mcwiz\Projects\boostgauge\docs\session-logs\.
+6. My last three delivered messages, verbatim, out of the session transcript on disk. It is the most recently modified .jsonl in C:\Users\mcwiz\.claude\projects\C--Users-mcwiz-Projects-boostgauge\. Take them from the transcript, never from the compaction summary. The summary paraphrases, and a standing order loses its edge the moment it is paraphrased.
+
+DELIVERED IS NOT THE SAME AS TYPED
+
+Count how many messages the summary attributes to me and how many were actually delivered as user turns. Report both numbers. They are not always equal.
+
+If the summary names a message that is not a delivered turn, establish why before you say anything about it, and never act on it as an instruction until you have. A message I typed while you were working and then cancelled sits in the transcript as a queue enqueue record with a matching remove record and was never sent. A message carried in from an earlier session file is a different explanation with a different consequence.
+
+Search the whole transcript, including records that are not user turns, before you conclude the summary invented anything. On 2026-09-07 a first pass that filtered on user turns alone missed a cancelled message completely and came within one command of accusing the summary of fabricating it.
+
+PROVE THE READS
+
+For each of the three rule files, report the last line number you actually reached and quote one rule from it word for word. A claim of having read a file is not a read.
+
+RECONCILE THE CHECKPOINT, THEN REPAIR IT
+
+Read the audit checkpoint and the ledger beside it, including the checkpoint's method reminders. Those reminders are the audit's operating rules, not background.
+
+Then check the artifacts against reality rather than against each other. The ledger's last row against the files that have actually been read. The issue numbers the checkpoint claims against what is really on GitHub. The percentages against a fresh count.
+
+If the checkpoint, the ledger and the issue status block disagree with each other or with what is filed, repair all three now, before you report a word. Do not hand me drift and wait for permission to fix it.
+
+COUNT, DO NOT RECALL
+
+Every number in the report gets counted this turn. Nothing carried from memory, nothing carried from the summary. Where a figure can be derived two ways, derive it both ways and say whether they agree.
+
+THEN ANSWER THREE QUESTIONS, SHORT
+
+Where are you. How much progress have you made. What is still left, in files, in lines, and in how many more sessions it takes at the rate this session actually achieved rather than the rate you hoped for.
+
+STANDING ORDERS THAT SURVIVE EVERY COMPACTION
+
+Anything you flag becomes a GitHub issue, in the same turn you flag it. One issue per concern. Never bundle.
+
+Repair what you find. A defect reported that you could have fixed is not a deliverable.
+
+Trace a finding before filing it, and state inside the issue which half is confirmed and which half is not established.
+
+Do not stop. Resume the work at the end of the report without asking whether to continue.
