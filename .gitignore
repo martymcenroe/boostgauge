@@ -200,3 +200,8 @@ data-dl/*
 !data-dl/transcripts/.gitkeep
 !data-dl/reference/
 !data-dl/reference/.gitkeep
+
+# A failing visual test writes its diff image here; it is evidence for the
+# person reading the failure, never source, and an untracked file blocks the
+# speedrun roll's base check (#481).
+tests/visual/diffs/
