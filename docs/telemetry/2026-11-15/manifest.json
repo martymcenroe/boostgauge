@@ -1,0 +1,31 @@
+{
+  "exported_at_utc": "2026-11-16T00:15:22.117833+00:00",
+  "exported_at_central": "2026-11-15T18:15:22.117833-06:00",
+  "table": "assemblyzero-telemetry",
+  "region": "us-east-1",
+  "consistent_read": true,
+  "match_rule": "the text 'boostgauge' anywhere in the item, case ignored; matched_in_repo_field when the repo or pk attribute holds it, matched_elsewhere_only otherwise",
+  "item_form": "raw DynamoDB AttributeValue JSON as boto3's low-level client returns it (no TypeDeserializer); binary values base64; lines ordered by pk then sk",
+  "file": "assemblyzero-telemetry-boostgauge.jsonl",
+  "sha256": "55f0ede39402605cb30333a9cdd7c15b350abc42f32d9c0045e4915b2f7980a1",
+  "bytes": 147869,
+  "item_count": 205,
+  "matched_in_repo_field": 43,
+  "matched_elsewhere_only": 162,
+  "earliest_event_time": "2026-08-25T00:26:40.542599+00:00",
+  "latest_event_time": "2026-11-15T11:23:58.663108+00:00",
+  "items_without_readable_event_time": 0,
+  "earliest_ttl": "2026-11-23T00:26:40+00:00",
+  "latest_ttl": "2027-02-13T11:23:58+00:00",
+  "items_without_ttl": 0,
+  "first_scan": {
+    "pages": 4,
+    "items_scanned": 7607,
+    "items_matched": 205
+  },
+  "second_scan": {
+    "pages": 4,
+    "items_scanned": 7607,
+    "items_matched": 205
+  }
+}
